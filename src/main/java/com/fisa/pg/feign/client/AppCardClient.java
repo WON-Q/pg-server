@@ -1,12 +1,13 @@
 package com.fisa.pg.feign.client;
 
+import com.fisa.pg.config.feign.AppCardClientConfig;
 import com.fisa.pg.feign.dto.appcard.request.AppCardAuthRequestDto;
 import com.fisa.pg.feign.dto.appcard.response.AppCardAuthResponseDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "appCardClient", url = "${app.card.token")
+@FeignClient(name = "appCardClient", url = "${app.appcard.endpoint}", configuration = AppCardClientConfig.class)
 public interface AppCardClient {
 
     /**
