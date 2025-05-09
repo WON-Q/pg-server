@@ -80,6 +80,11 @@ public class Admin {
     private LocalDateTime updatedAt;
 
     /**
+     * 역할 (ADMIN)
+     */
+    private Role role;
+
+    /**
      * 비밀번호 변경 처리
      *
      * @param newPassword 새 비밀번호(암호화된 상태)

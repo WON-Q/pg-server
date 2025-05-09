@@ -125,7 +125,7 @@ public class Merchant {
     @OneToMany(mappedBy = "merchant", cascade = CascadeType.ALL)
     @Builder.Default
     private List<TransactionLog> transactionLogs = new ArrayList<>();
-    
+
     /**
      * 가맹점 정산 정보 목록 (1:N 관계)
      * 한 가맹점에 여러 정산 내역이 존재할 수 있음
@@ -133,7 +133,7 @@ public class Merchant {
     @OneToMany(mappedBy = "merchant", cascade = CascadeType.ALL)
     @Builder.Default
     private List<MerchantSettlement> settlements = new ArrayList<>();
-    
+
     /**
      * 가맹점 API 키 목록 (1:N 관계)
      * 한 가맹점은 여러 API 키를 가질 수 있음 (예: 운영용, 테스트용)
@@ -141,6 +141,11 @@ public class Merchant {
     @OneToMany(mappedBy = "merchant", cascade = CascadeType.ALL)
     @Builder.Default
     private List<ApiKey> apiKeys = new ArrayList<>();
+
+    /**
+     * 역할 (MERCHANT)
+     */
+    private Role role = Role.MERCHANT;
 
     /**
      * 비활성화 처리
@@ -166,4 +171,5 @@ public class Merchant {
     public void updateLoginTime() {
         this.lastLoginAt = LocalDateTime.now();
     }
+
 }
