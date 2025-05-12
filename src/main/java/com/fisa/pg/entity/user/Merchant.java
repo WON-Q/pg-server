@@ -4,7 +4,6 @@ import com.fisa.pg.entity.payment.Payment;
 import com.fisa.pg.entity.transaction.Transaction;
 import com.fisa.pg.entity.transaction.TransactionLog;
 import com.fisa.pg.entity.settlement.MerchantSettlement;
-import com.fisa.pg.entity.auth.ApiKey;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -81,7 +80,7 @@ public class Merchant {
     /**
      * Transaction 상태가 변경될 때마다 PG사가 가맹점에 전송하는 Webhook URL
      */
-    @Column(name = "webhook_url", nullable = false)
+    @Column(name = "webhook_url", nullable = true)
     private String webhookUrl;
 
     /**
@@ -133,14 +132,6 @@ public class Merchant {
     @OneToMany(mappedBy = "merchant", cascade = CascadeType.ALL)
     @Builder.Default
     private List<MerchantSettlement> settlements = new ArrayList<>();
-    
-    /**
-     * 가맹점 API 키 목록 (1:N 관계)
-     * 한 가맹점은 여러 API 키를 가질 수 있음 (예: 운영용, 테스트용)
-     */
-    @OneToMany(mappedBy = "merchant", cascade = CascadeType.ALL)
-    @Builder.Default
-    private List<ApiKey> apiKeys = new ArrayList<>();
 
     /**
      * 비활성화 처리
