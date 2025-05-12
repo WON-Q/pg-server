@@ -28,7 +28,7 @@ jobs:
           java-version: 17
           distribution: 'zulu' # Alternative distribution options are available.
 
-      - name: Set secret.yml file
+      - name: Set secret.yml
         run: |
           echo "$SECRET_YML_CONTENT" > ./src/main/resources/secret.yml
         env:
