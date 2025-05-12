@@ -157,4 +157,25 @@ public class Merchant {
     public void updateLoginTime() {
         this.lastLoginAt = LocalDateTime.now();
     }
+
+    /**
+     * 가맹점의 Webhook URL을 등록 또는 변경
+     *
+     * @param newWebhookUrl 새로 설정할 Webhook URL
+     */
+    public void changeWebhookUrl(String newWebhookUrl) {
+        this.webhookUrl = newWebhookUrl;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 가맹점의 Webhook URL을 삭제
+     */
+    public void removeWebhookUrl() {
+        this.webhookUrl = null;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+
+
 }
