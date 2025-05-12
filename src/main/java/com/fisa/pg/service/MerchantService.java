@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 
 /**
  * 가맹점 관련 비즈니스 로직 처리 서비스
@@ -21,7 +20,7 @@ public class MerchantService {
 
 
     /**
-     * Webhook URL 등록 또는 수정
+     * MERCHANT Webhook URL 등록 또는 수정
      */
     @Transactional
     public void updateWebhookUrl(Merchant merchant, WebhookUrlRequestDto dto) {
@@ -31,7 +30,7 @@ public class MerchantService {
     }
 
     /**
-     * Webhook URL 조회
+     * MERCHANT Webhook URL 조회
      */
     @Transactional(readOnly = true)
     public WebhookUrlResponseDto getWebhookUrl(Merchant merchant) {
@@ -41,7 +40,7 @@ public class MerchantService {
     }
 
     /**
-     * Webhook URL 삭제
+     * MERCHANT Webhook URL 삭제
      */
     @Transactional
     public void deleteWebhookUrl(Merchant merchant) {

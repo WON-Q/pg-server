@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Webhook URL 응답 DTO
+ * MERCHANT Webhook URL 응답 DTO
  */
 @Data
 @Builder

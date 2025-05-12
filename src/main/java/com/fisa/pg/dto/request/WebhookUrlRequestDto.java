@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Webhook URL 등록 또는 수정 요청 DTO
+ * MERCHANT Webhook URL 등록 또는 수정 요청 DTO
  */
 @Data
 @Builder
