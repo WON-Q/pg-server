@@ -3,10 +3,12 @@ package com.fisa.pg.config.feign;
 import feign.RequestInterceptor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * 카드사 API 연동을 위한 Feign Client 설정 클래스
  */
+@Configuration
 public class CardClientConfig {
 
     @Value("${app.card.token}")

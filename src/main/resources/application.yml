@@ -2,5 +2,24 @@ spring:
   application:
     name: pg-server
 
+  profiles:
+    active: dev
+
   config:
     import: classpath:secret.yml
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/pgdb
+    username: pguser
+    password: pgpass
+    driver-class-name: org.postgresql.Driver
+
+
+app:
+  wonq:
+    endpoint: localhost:8081
+  card:
+    endpoint: localhost:8082
+  appcard:
+    endpoint: localhost:8083
+

@@ -46,6 +46,18 @@ public enum PaymentStatus {
     /**
      * 결제가 일정 시간 동안 진행되지 않아 만료된 상태 (ex. 앱카드 인증 세션이 만료된 경우)
      */
-    EXPIRED
+    EXPIRED,
+
+    /**
+     * 결제 환불됨
+     */
+    REFUNDED,
+
+    /**
+     * 결제 환불 실패 중
+     */
+    REFUND_FAILED
+
+
 
 }

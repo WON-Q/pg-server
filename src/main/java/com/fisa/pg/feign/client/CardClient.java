@@ -2,7 +2,9 @@ package com.fisa.pg.feign.client;
 
 import com.fisa.pg.config.feign.CardClientConfig;
 import com.fisa.pg.feign.dto.card.request.CardPaymentApprovalRequestDto;
+import com.fisa.pg.feign.dto.card.request.CardRefundRequestDto;
 import com.fisa.pg.feign.dto.card.response.CardPaymentApprovalResponseDto;
+import com.fisa.pg.feign.dto.card.response.CardRefundResponseDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 /**
  * 카드사 API를 호출하기 위한 Feign 클라이언트
  */
-@FeignClient(name = "cardClient", url = "${app.card.endpoint}", configuration = CardClientConfig.class)
+@FeignClient(name = "cardClient", url = "${app.card.endpoint:localhost:8082}", configuration = CardClientConfig.class)
 public interface CardClient {
 
     /**
@@ -27,4 +29,7 @@ public interface CardClient {
     CardPaymentApprovalResponseDto requestCardApproval(
             @RequestBody CardPaymentApprovalRequestDto request
     );
+
+    @PostMapping("/refund")
+    CardRefundResponseDto requestCardRefund(@RequestBody CardRefundRequestDto request);
 }

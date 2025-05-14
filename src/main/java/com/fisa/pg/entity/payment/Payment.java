@@ -102,6 +102,15 @@ public class Payment {
     @Builder.Default
     private List<Refund> refunds = new ArrayList<>();
 
+
+    /**
+     * 결제 상태 업데이트
+     * @param newStatus 새로운 결제 상태
+     */
+    public void updatePaymentStatus(PaymentStatus newStatus) {
+        this.paymentStatus = newStatus;
+    }
+
     /**
      * 결제 수단을 업데이트하는 메서드
      * 지원하지 않는 결제 수단일 경우 IllegalArgumentException 발생

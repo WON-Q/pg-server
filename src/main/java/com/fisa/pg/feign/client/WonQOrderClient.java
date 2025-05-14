@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "wonQOrderClient", url = "${app.wonq.endpoint}", configuration = WonQOrderClientConfig.class)
+@FeignClient(name = "wonQOrderClient", url = "${app.wonq.endpoint:localhost:8081}", configuration = WonQOrderClientConfig.class)
 public interface WonQOrderClient {
 
     /**

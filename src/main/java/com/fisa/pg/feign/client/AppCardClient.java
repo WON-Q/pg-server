@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "appCardClient", url = "${app.appcard.endpoint}", configuration = AppCardClientConfig.class)
+@FeignClient(name = "appCardClient", url = "${app.appcard.endpoint:localhost:8083}", configuration = AppCardClientConfig.class)
 public interface AppCardClient {
 
     /**

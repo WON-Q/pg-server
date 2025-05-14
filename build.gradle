@@ -49,7 +49,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
 
     // MySQL
-    runtimeOnly 'com.mysql:mysql-connector-j'
+    runtimeOnly 'org.postgresql:postgresql:42.7.3'
 
     // Junit 5
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

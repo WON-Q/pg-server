@@ -30,15 +30,6 @@ public interface UserCardRepository extends JpaRepository<UserCard, Long> {
     List<UserCard> findByIssuer(String issuer);
 
     /**
-     * 카드 발급사와 카드 유형으로 UserCard 목록을 찾습니다.
-     *
-     * @param issuer 카드 발급사
-     * @param cardType 카드 유형
-     * @return UserCard 목록
-     */
-    List<UserCard> findByIssuerAndCardType(String issuer, String cardType);
-
-    /**
      * 해당 마스킹된 카드 번호의 UserCard가 존재하는지 확인합니다.
      *
      * @param maskedCardNumber 마스킹된 카드 번호

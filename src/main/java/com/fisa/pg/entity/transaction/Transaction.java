@@ -127,6 +127,14 @@ public class Transaction {
 
 
     /**
+     * 트랜잭션 상태 조회
+     */
+    public TransactionStatus getTransactionStatus() {
+        return this.transactionStatus;
+    }
+
+
+    /**
      * 결제 수단만 업데이트합니다.
      *
      * @param method 업데이트할 결제 수단 (문자열)

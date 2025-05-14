@@ -3,8 +3,11 @@ package com.fisa.pg.repository;
 import com.fisa.pg.entity.payment.Payment;
 import com.fisa.pg.entity.payment.PaymentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -19,5 +22,10 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      */
     Optional<Payment> findByOrderIdAndMerchantId(String orderId, Long merchantId);
 
-    int updateStatusByTransactionId(String txnId, PaymentStatus status);
+    @Modifying
+    @Transactional
+    @Query("UPDATE Payment p SET p.paymentStatus = :status WHERE p.id IN " +
+            "(SELECT t.payment.id FROM Transaction t WHERE t.txnId = :txnId)")
+    int updateStatusByTransactionId(@Param("txnId") String txnId,
+                                    @Param("status") PaymentStatus status);
 }
