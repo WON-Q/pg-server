@@ -7,5 +7,5 @@ package com.fisa.pg.entity.payment;
  * </ul>
  */
 public enum PaymentMethod {
-    APP_CARD,
+    APP_CARD
 }
