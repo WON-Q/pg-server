@@ -4,6 +4,7 @@ import com.fisa.pg.entity.transaction.Transaction;
 import com.fisa.pg.entity.user.Merchant;
 import com.fisa.pg.entity.billing.Billing;
 import com.fisa.pg.entity.refund.Refund;
+import com.fisa.pg.feign.dto.wonq.request.PaymentCreateRequestDto;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -101,4 +102,31 @@ public class Payment {
     @Builder.Default
     private List<Refund> refunds = new ArrayList<>();
 
+    /**
+     * 결제 수단을 업데이트하는 메서드
+     * 지원하지 않는 결제 수단일 경우 IllegalArgumentException 발생
+     *
+     * @param method 결제 수단 (예: WOORI_APP_CARD)
+     */
+    public void updatePaymentMethod(String method) {
+        this.paymentMethod = PaymentMethod.valueOf(method);
+    }
+
+    /**
+     * PaymentCreateRequestDto로부터 Payment 엔티티를 생성하는 정적 팩토리 메서드
+     *
+     * @param request 결제 생성 요청 DTO
+     * @param merchant 가맹점 정보
+     * @return 생성된 Payment 엔티티
+     */
+    public static Payment from(PaymentCreateRequestDto request, Merchant merchant) {
+        return Payment.builder()
+                .orderId(request.getOrderId())
+                .merchant(merchant)
+                .amount(request.getAmount())
+                .currency(request.getCurrency())
+                .paymentStatus(PaymentStatus.CREATED)
+                .paymentMethod(PaymentMethod.valueOf("NONE"))
+                .build();
+    }
 }
