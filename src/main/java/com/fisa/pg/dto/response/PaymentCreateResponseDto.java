@@ -2,6 +2,7 @@ package com.fisa.pg.dto.response;
 
 import com.fisa.pg.entity.payment.Payment;
 import com.fisa.pg.entity.payment.PaymentStatus;
+import com.fisa.pg.entity.user.Merchant;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -45,16 +46,16 @@ public class PaymentCreateResponseDto {
     private String callbackUrl;
 
     /**
-     * Payment 엔티티로부터 응답 DTO를 생성하는 정적 팩토리 메서드
+     * Payment 엔티티와 Merchant 엔티티로부터 응답 DTO를 생성하는 정적 팩토리 메서드
      *
-     * @param payment    결제 엔티티
-     * @param merchantId 가맹점 ID
+     * @param payment  결제 엔티티
+     * @param merchant 가맹점 엔티티
      * @return 생성된 응답 DTO
      */
-    public static PaymentCreateResponseDto from(Payment payment, Long merchantId) {
+    public static PaymentCreateResponseDto from(Payment payment, Merchant merchant) {
         return PaymentCreateResponseDto.builder()
                 .paymentId(payment.getId())
-                .merchantId(merchantId)
+                .merchantId(merchant.getId())
                 .paymentStatus(payment.getPaymentStatus())
                 .amount(payment.getAmount())
                 .callbackUrl("/api/payment/ui/" + payment.getId())
