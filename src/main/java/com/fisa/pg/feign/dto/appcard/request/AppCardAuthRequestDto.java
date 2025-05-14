@@ -28,18 +28,13 @@ public class AppCardAuthRequestDto {
     private Long amount;
 
     /**
-     * 가맹점 ID
+     * 가맹점 이름
      */
-    private Long merchantId;
+    private String name;
 
     /**
      * 주문 ID
      */
     private String orderId;
-
-    /**
-     * 콜백 URL (결제 완료 후 리다이렉트)
-     */
-    private String callbackUrl;
 
 }
