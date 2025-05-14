@@ -42,13 +42,13 @@ public class ApiKey {
     private String name;
 
     /**
-     * 공개 키
+     * 액세스 키
      */
-    @Column(name = "public_key", nullable = false, unique = true, length = 128)
-    private String publicKey;
+    @Column(name = "access_key", nullable = false, unique = true, length = 128)
+    private String accessKey;
 
     /**
-     * 비공개 키
+     * 시크릿 키
      */
     @Column(name = "secret_key", nullable = false, length = 256)
     private String secretKey;
