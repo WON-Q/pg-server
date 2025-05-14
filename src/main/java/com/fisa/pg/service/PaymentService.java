@@ -12,6 +12,7 @@ import com.fisa.pg.feign.client.AppCardClient;
 import com.fisa.pg.feign.client.CardClient;
 import com.fisa.pg.feign.client.WonQOrderClient;
 import com.fisa.pg.feign.dto.appcard.request.AppCardAuthRequestDto;
+import com.fisa.pg.feign.dto.appcard.request.AppCardPaymentResultDto;
 import com.fisa.pg.feign.dto.appcard.response.AppCardAuthResponseDto;
 import com.fisa.pg.feign.dto.wonq.request.*;
 import com.fisa.pg.feign.dto.wonq.response.PaymentCreateResponseDto;
@@ -326,6 +327,33 @@ public class PaymentService {
             }
         } catch (Exception e) {
             log.error("결제 결과 전송 중 오류 발생: txnId={}, 오류={}", txnId, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 앱카드 서버에 결제 결과 전송
+     *
+     * @param txnId 트랜잭션 ID
+     * @param paymentStatus 결제 상태
+     */
+    private void notifyAppCardServer(String txnId, PaymentStatus paymentStatus) {
+        log.info("앱카드 서버에 결제 결과 전송 시작: txnId={}, status={}", txnId, paymentStatus);
+
+        try {
+            // 앱카드 서버에 결제 결과 전송
+            AppCardPaymentResultDto resultDto = AppCardPaymentResultDto.from(txnId, paymentStatus);
+            ResponseEntity<BaseResponse<Void>> response = appCardClient.sendPaymentResult(resultDto);
+
+            if (response.getStatusCode().is2xxSuccessful() &&
+                    response.getBody() != null &&
+                    response.getBody().isSuccess()) {
+                log.info("앱카드 서버에 결제 결과 전송 성공: txnId={}", txnId);
+            } else {
+                log.warn("앱카드 서버에 결제 결과 전송 실패: txnId={}, 응답={}",
+                        txnId, response.getBody() != null ? response.getBody().getCode() : "응답 없음");
+            }
+        } catch (Exception e) {
+            log.error("앱카드 서버에 결제 결과 전송 중 오류 발생: txnId={}, 오류={}", txnId, e.getMessage(), e);
         }
     }
 

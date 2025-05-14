@@ -1,7 +1,9 @@
 package com.fisa.pg.feign.client;
 
 import com.fisa.pg.config.feign.AppCardClientConfig;
+import com.fisa.pg.dto.BaseResponse;
 import com.fisa.pg.feign.dto.appcard.request.AppCardAuthRequestDto;
+import com.fisa.pg.feign.dto.appcard.request.AppCardPaymentResultDto;
 import com.fisa.pg.feign.dto.appcard.response.AppCardAuthResponseDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
@@ -26,4 +28,12 @@ public interface AppCardClient {
             @RequestBody AppCardAuthRequestDto request
     );
 
+    /**
+     * 결제 결과 전송
+     *
+     * @param result 결제 결과 DTO
+     * @return 결과 전송 응답
+     */
+    @PostMapping("/api/payment/result")
+    ResponseEntity<BaseResponse<Void>> sendPaymentResult(@RequestBody AppCardPaymentResultDto result);
 }
