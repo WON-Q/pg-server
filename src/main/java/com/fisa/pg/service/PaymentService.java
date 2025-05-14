@@ -152,51 +152,52 @@ public class PaymentService {
     }
 
     /**
- * 앱카드 결제 인증 요청 처리
- * <br/>
- * 이 메서드는 결제 흐름 중 <b>16-19번째 단계</b>를 처리합니다.
- * 자세한 내용은 프로젝트 내 {@code docs/payment-flow.md} 문서를 참조해 주세요.
- *
- * @param request 앱카드 인증 요청 정보
- * @return 앱카드 실행을 위한 딥링크
- */
-@Transactional
-public String requestAppCardAuth(AppCardAuthRequestDto request) {
-    log.info("앱카드 인증 요청 시작: txnId={}, amount={}", request.getTxnId(), request.getAmount());
+     * 앱카드 결제 인증 요청 처리
+     * <br/>
+     * 이 메서드는 결제 흐름 중 <b>16-19번째 단계</b>를 처리합니다.
+     * 자세한 내용은 프로젝트 내 {@code docs/payment-flow.md} 문서를 참조해 주세요.
+     *
+     * @param request 앱카드 인증 요청 정보
+     * @return 앱카드 실행을 위한 딥링크
+     */
+    @Transactional
+    public String requestAppCardAuth(AppCardAuthRequestDto request) {
+        log.info("앱카드 인증 요청 시작: txnId={}, amount={}", request.getTxnId(), request.getAmount());
 
-    try {
-        // 앱카드 서버와 통신하여 인증 딥링크 요청 (16단계)
-        ResponseEntity<AppCardAuthResponseDto> response = appCardClient.requestAppCardAuth(request);
+        try {
+            // 앱카드 서버와 통신하여 인증 딥링크 요청 (16단계)
+            ResponseEntity<AppCardAuthResponseDto> response = appCardClient.requestAppCardAuth(request);
 
-        // 응답 검증 및 딥링크 추출 (19단계)
-        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-            throw new RuntimeException("앱카드 서버 통신 실패");
+            // 응답 검증 및 딥링크 추출 (19단계)
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                throw new RuntimeException("앱카드 서버 통신 실패");
+            }
+
+            String deepLink = response.getBody().getDeepLink();
+            log.info("앱카드 인증 딥링크 수신 완료: txnId={}, deepLink={}", request.getTxnId(), deepLink);
+
+            // 원큐 서버에 딥링크 정보 전달 (20단계)
+            Transaction transaction = transactionRepository.findByTxnId(request.getTxnId())
+                    .orElseThrow(() -> new RuntimeException("트랜잭션을 찾을 수 없습니다: " + request.getTxnId()));
+
+            DeepLinkPaymentRequestDto deepLinkRequest = DeepLinkPaymentRequestDto.builder()
+                    .orderId(request.getOrderId())
+                    .paymentId(transaction.getPayment().getId().toString())
+                    .deepLink(deepLink)
+                    .build();
+
+            // 원큐 오더 서버에 딥링크 전송
+            wonQOrderClient.sendDeepLink(deepLinkRequest);
+            log.info("딥링크를 원큐 오더 서버에 전송 완료: txnId={}", request.getTxnId());
+
+            return deepLink;
+        } catch (Exception e) {
+            log.error("앱카드 인증 요청 처리 중 오류 발생: txnId={}, error={}",
+                      request.getTxnId(), e.getMessage(), e);
+            throw new RuntimeException("앱카드 인증 요청 처리 중 오류가 발생했습니다", e);
         }
-
-        String deepLink = response.getBody().getDeepLink();
-        log.info("앱카드 인증 딥링크 수신 완료: txnId={}, deepLink={}", request.getTxnId(), deepLink);
-
-        // 원큐 서버에 딥링크 정보 전달 (20단계)
-        Transaction transaction = transactionRepository.findByTxnId(request.getTxnId())
-                .orElseThrow(() -> new RuntimeException("트랜잭션을 찾을 수 없습니다: " + request.getTxnId()));
-
-        DeepLinkPaymentRequestDto deepLinkRequest = DeepLinkPaymentRequestDto.builder()
-                .orderId(request.getOrderId())
-                .paymentId(transaction.getPayment().getId().toString())
-                .deepLink(deepLink)
-                .build();
-
-        // 원큐 오더 서버에 딥링크 전송
-        wonQOrderClient.sendDeepLink(deepLinkRequest);
-        log.info("딥링크를 원큐 오더 서버에 전송 완료: txnId={}", request.getTxnId());
-
-        return deepLink;
-    } catch (Exception e) {
-        log.error("앱카드 인증 요청 처리 중 오류 발생: txnId={}, error={}",
-                  request.getTxnId(), e.getMessage(), e);
-        throw new RuntimeException("앱카드 인증 요청 처리 중 오류가 발생했습니다", e);
     }
-}
+
     /**
      * 앱카드 인증 결과를 처리하고 카드사 승인을 진행합니다.
      * <br/>
@@ -259,8 +260,8 @@ public String requestAppCardAuth(AppCardAuthRequestDto request) {
         // 3. 카드사 승인 요청 생성 (33단계)
         CardPaymentApprovalRequestDto cardApprovalRequest = CardPaymentApprovalRequestDto.from(
                 txnId,
-                approvalInfo.getAmount(),
-                approvalInfo.getMerchantId(),
+                transaction.getAmount(),
+                transaction.getMerchant().getSettlementAccountNumber(),
                 cardNumber
         );
 
