@@ -7,6 +7,11 @@ package com.fisa.pg.entity.payment;
 public enum PaymentStatus {
 
     /**
+     * 결제 요청이 PG 서버에 도달하여 트랜잭션이 생성된 상태
+     */
+    CREATED,
+
+    /**
      * 결제가 정상적으로 승인된 상태 (카드사에서 승인 완료된 상태)
      */
     SUCCEEDED,
