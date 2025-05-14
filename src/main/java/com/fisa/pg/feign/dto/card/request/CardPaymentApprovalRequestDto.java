@@ -20,7 +20,7 @@ public class CardPaymentApprovalRequestDto {
     /**
      * 트랜잭션 ID
      */
-    private String transactionId;
+    private String txnId;
 
     /**
      * 결제 금액
@@ -28,9 +28,9 @@ public class CardPaymentApprovalRequestDto {
     private Long amount;
 
     /**
-     * 가맹점 ID
+     * 정산받을 가맹점 계좌번호
      */
-    private Long merchantId;
+    private String settlementAccountNumber;
 
     /**
      * 카드 번호
@@ -42,15 +42,15 @@ public class CardPaymentApprovalRequestDto {
      *
      * @param txnId 트랜잭션 ID
      * @param amount 결제 금액
-     * @param merchantId 가맹점 ID
+     * @param settlementAccountNumber 정산받을 가맹점 계좌번호
      * @param cardNumber 카드 번호
      * @return 생성된 카드 승인 요청 DTO
      */
-    public static CardPaymentApprovalRequestDto from(String txnId, Long amount, Long merchantId, String cardNumber) {
+    public static CardPaymentApprovalRequestDto from(String txnId, Long amount, String settlementAccountNumber, String cardNumber) {
         return CardPaymentApprovalRequestDto.builder()
-                .transactionId(txnId)
+                .txnId(txnId)
                 .amount(amount)
-                .merchantId(merchantId)
+                .settlementAccountNumber(settlementAccountNumber)
                 .cardNumber(cardNumber)
                 .build();
     }
