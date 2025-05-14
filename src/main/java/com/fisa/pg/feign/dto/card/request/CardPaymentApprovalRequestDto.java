@@ -20,7 +20,7 @@ public class CardPaymentApprovalRequestDto {
     /**
      * 트랜잭션 ID
      */
-    private String transactionId;
+    private String txnId;
 
     /**
      * 결제 금액
@@ -28,9 +28,9 @@ public class CardPaymentApprovalRequestDto {
     private Long amount;
 
     /**
-     * 가맹점 ID
+     * 정산받을 가맹점 계좌번호
      */
-    private Long merchantId;
+    private String settlementAccountNumber;
 
     /**
      * 카드 번호
