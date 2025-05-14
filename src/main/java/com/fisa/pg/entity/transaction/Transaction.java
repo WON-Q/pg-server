@@ -10,6 +10,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 거래 정보를 관리하는 엔티티
@@ -31,8 +32,8 @@ public class Transaction {
      * 트랜잭션 ID (외부와 연동 가능한 고유 ID로, 직접 생성하여 사용한다.)
      */
     @Id
-    @Column(name = "transaction_id", nullable = false, length = 64)
-    private String transactionId;
+    @Column(name = "txn_id", nullable = false, length = 64)
+    private String txnId;
 
     /**
      * 연관된 결제 정보 (Payment 1 : Transaction N)
@@ -114,5 +115,74 @@ public class Transaction {
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Refund> refunds = new ArrayList<>();
+
+    /**
+     * 트랜잭션 상태를 업데이트합니다.
+     *
+     * @param status 새로운 트랜잭션 상태
+     */
+    public void updateStatus(TransactionStatus status) {
+        this.transactionStatus = status;
+    }
+
+
+    /**
+     * 결제 수단만 업데이트합니다.
+     *
+     * @param method 업데이트할 결제 수단 (문자열)
+     * @throws IllegalArgumentException 유효하지 않은 결제 수단인 경우
+     */
+    public void updateMethod(String method) {
+        try {
+            this.method = PaymentMethod.valueOf(method);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("지원하지 않는 결제 수단입니다: " + method);
+        }
+    }
+
+    /**
+     * 카드 결제 승인 요청에 필요한 정보를 가져옵니다.
+     *
+     * @return 카드 결제 승인 요청 정보
+     */
+    public CardApprovalInfo getCardApprovalInfo() {
+        return new CardApprovalInfo(
+                this.txnId,
+                this.amount,
+                this.merchant.getId()
+        );
+    }
+
+    /**
+     * 카드 결제 승인 요청에 필요한 정보 클래스
+     */
+    @Getter
+    @AllArgsConstructor
+    public static class CardApprovalInfo {
+        private final String txnId;
+        private final Long amount;
+        private final Long merchantId;
+    }
+
+    /**
+     * PaymentCreateRequestDto로부터 Transaction 엔티티를 생성하는 정적 팩토리 메서드
+     *
+     * @param payment 연관된 결제 정보
+     * @param merchant 가맹점 정보
+     * @param request 결제 생성 요청 DTO
+     * @return 생성된 Transaction 엔티티
+     */
+    public static Transaction from(Payment payment, Merchant merchant, com.fisa.pg.feign.dto.wonq.request.PaymentCreateRequestDto request) {
+        return Transaction.builder()
+                .txnId(UUID.randomUUID().toString())
+                .payment(payment)
+                .merchant(merchant)
+                .amount(request.getAmount())
+                .currency(request.getCurrency())
+                .method(null)
+                .transactionStatus(TransactionStatus.PENDING)
+                .requestedAt(LocalDateTime.now())
+                .build();
+    }
 
 }
