@@ -43,4 +43,19 @@ public class UserCard {
     @Column(name = "card_type", nullable = false)
     private CardType cardType;
 
+    /**
+     * BinInfo를 기반으로 UserCard 엔티티를 생성하는 정적 팩토리 메서드
+     *
+     * @param binInfo 카드 BIN 정보
+     * @param cardNumber 마스킹된 카드 번호
+     * @return 생성된 UserCard 엔티티
+     */
+    public static UserCard from(BinInfo binInfo, String cardNumber) {
+        return UserCard.builder()
+                .issuer(binInfo.getIssuer())
+                .maskedCardNumber(cardNumber)
+                .cardType(binInfo.getCardType())
+                .build();
+    }
+
 }
