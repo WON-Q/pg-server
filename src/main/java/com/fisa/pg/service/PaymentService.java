@@ -10,8 +10,12 @@ import com.fisa.pg.entity.transaction.Transaction;
 import com.fisa.pg.entity.transaction.TransactionStatus;
 import com.fisa.pg.entity.user.Merchant;
 import com.fisa.pg.exception.PaymentDuplicateException;
+import com.fisa.pg.exception.TransactionNotFoundException;
 import com.fisa.pg.feign.client.AppCardClient;
 import com.fisa.pg.feign.client.WonQClient;
+import com.fisa.pg.feign.dto.appcard.request.AppCardAuthRequestDto;
+import com.fisa.pg.feign.dto.appcard.response.AppCardAuthResponseDto;
+import com.fisa.pg.feign.dto.wonq.request.DeepLinkPaymentRequestDto;
 import com.fisa.pg.repository.PaymentRepository;
 import com.fisa.pg.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -130,6 +134,48 @@ public class PaymentService {
         }
 
         throw new IllegalArgumentException("지원하지 않는 결제 수단입니다: " + method);
+    }
+
+    /**
+     * 앱카드 결제 인증 요청 처리하는 메서드
+     * <p>
+     * 결제흐름의 16, 17, 18, 19번 단계에 해당하는 처리를 수행합니다.
+     *
+     * @param request 앱카드 인증 요청 정보
+     * @return 앱카드 실행을 위한 딥링크
+     */
+    @Transactional
+    public String requestAppCardAuth(AppCardAuthRequestDto request) {
+        log.info("앱카드 인증 요청 시작: txnId={}, amount={}", request.getTxnId(), request.getAmount());
+
+        try {
+            // 앱카드 서버와 통신하여 인증 딥링크 요청 (16단계)
+            AppCardAuthResponseDto response = appCardClient.requestAuth(request);
+
+            // 응답 검증 및 딥링크 추출 (19단계)
+            String deepLink = response.getDeepLink();
+            log.info("앱카드 인증 딥링크 수신 완료: txnId={}, deepLink={}", request.getTxnId(), deepLink);
+
+            // 원큐 서버에 딥링크 정보 전달 (20단계)
+            Transaction transaction = transactionRepository.findById(request.getTxnId())
+                    .orElseThrow(() -> new TransactionNotFoundException(request.getTxnId()));
+
+            DeepLinkPaymentRequestDto deepLinkRequest = DeepLinkPaymentRequestDto.builder()
+                    .orderId(request.getOrderId())
+                    .paymentId(transaction.getPayment().getId().toString())
+                    .deepLink(deepLink)
+                    .build();
+
+            // 원큐 오더 서버에 딥링크 전송
+            wonQClient.sendDeepLink(deepLinkRequest);
+            log.info("딥링크를 원큐 오더 서버에 전송 완료: txnId={}", request.getTxnId());
+
+            return deepLink;
+
+        } catch (Exception e) {
+            log.error("앱카드 인증 요청 처리 중 오류 발생: txnId={}, error={}", request.getTxnId(), e.getMessage(), e);
+            throw new RuntimeException("앱카드 인증 요청 처리 중 오류가 발생했습니다", e);
+        }
     }
 
 }
