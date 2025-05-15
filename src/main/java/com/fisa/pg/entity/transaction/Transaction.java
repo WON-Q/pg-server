@@ -98,7 +98,7 @@ public class Transaction {
      */
     @Column(name = "canceled_at", nullable = true)
     private LocalDateTime canceledAt;
-    
+
     /**
      * 트랜잭션 로그 목록
      * 하나의 트랜잭션에 여러 로그가 생성됨 (1:N 관계)
@@ -106,7 +106,7 @@ public class Transaction {
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<TransactionLog> transactionLogs = new ArrayList<>();
-    
+
     /**
      * 트랜잭션에 대한 환불 정보
      * 하나의 트랜잭션에 여러 환불이 발생할 수 있음 (부분 환불 포함) (1:N 관계)
@@ -114,5 +114,20 @@ public class Transaction {
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Refund> refunds = new ArrayList<>();
+
+    /**
+     * 결제 수단을 업데이트하는 메서드
+     *
+     * @param method 업데이트할 결제 수단 (문자열)
+     * @throws IllegalArgumentException 유효하지 않은 결제 수단인 경우
+     */
+    public void updatePaymentMethod(String method) {
+        try {
+            this.method = PaymentMethod.valueOf(method);
+
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("지원하지 않는 결제 수단입니다: " + method);
+        }
+    }
 
 }
