@@ -110,4 +110,15 @@ public class Payment {
         this.paymentStatus = newStatus;
     }
 
+    /**
+     * 결제 수단을 업데이트하는 메서드
+     * <br />
+     * 지원하지 않는 결제 수단일 경우 IllegalArgumentException 발생
+     *
+     * @param method 결제 수단 (예: WOORI_APP_CARD)
+     */
+    public void updatePaymentMethod(String method) {
+        this.paymentMethod = PaymentMethod.valueOf(method);
+    }
+
 }
