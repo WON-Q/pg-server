@@ -6,9 +6,8 @@ import com.fisa.pg.entity.transaction.TransactionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
-import java.util.UUID;
 
-public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
+public interface TransactionRepository extends JpaRepository<Transaction, String> {
 
     /**
      * 특정 결제(Payment)와 트랜잭션 상태로 트랜잭션을 조회하는 메서드
