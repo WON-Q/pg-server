@@ -37,4 +37,23 @@ public class CardPaymentApprovalRequestDto {
      */
     private String cardNumber;
 
+    /**
+     * 트랜잭션 정보와 카드 정보를 기반으로 카드 결제 승인 요청 DTO를 생성하는 정적 팩토리 메서드
+     *
+     * @param transactionId 트랜잭션 ID
+     * @param amount 결제 금액
+     * @param settlementAccountNumber 가맹점 정산 계좌번호
+     * @param cardNumber 전체 카드 번호
+     * @return 카드 결제 승인 요청 DTO
+     */
+    public static CardPaymentApprovalRequestDto from(String transactionId, Long amount, String settlementAccountNumber, String cardNumber) {
+        return CardPaymentApprovalRequestDto.builder()
+                .txnId(transactionId)
+                .amount(amount)
+                .settlementAccountNumber(settlementAccountNumber)
+                .cardNumber(cardNumber)
+                .build();
+    }
+
+
 }
