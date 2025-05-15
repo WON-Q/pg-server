@@ -85,14 +85,14 @@ public class Payment {
     @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Transaction> transactions = new ArrayList<>();
-    
+
     /**
      * 결제에 대한 청구 정보 (1:1 관계)
      * 하나의 결제에는 하나의 청구만 존재
      */
     @OneToOne(mappedBy = "payment", cascade = CascadeType.ALL, orphanRemoval = true)
     private Billing billing;
-    
+
     /**
      * 결제에 대한 환불 정보 (1:N 관계)
      * 하나의 결제에 여러 환불이 생성될 수 있음(부분 환불 포함)
@@ -100,5 +100,14 @@ public class Payment {
     @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Refund> refunds = new ArrayList<>();
+
+    /**
+     * 결제 상태를 업데이트하는 메서드
+     *
+     * @param newStatus 새로운 결제 상태
+     */
+    public void updatePaymentStatus(PaymentStatus newStatus) {
+        this.paymentStatus = newStatus;
+    }
 
 }
