@@ -54,7 +54,7 @@ public class PaymentService {
                 .payment(payment)
                 .merchant(merchant)
                 .amount(request.getAmount())
-                .transactionStatus(TransactionStatus.CREATED)
+                .transactionStatus(TransactionStatus.PENDING)
                 .build();
 
         transactionRepository.save(transaction);
