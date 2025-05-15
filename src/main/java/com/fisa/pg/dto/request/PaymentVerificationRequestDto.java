@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 @NoArgsConstructor
-@AllArgsConstructor
+//@AllArgsConstructor
 public class PaymentVerificationRequestDto {
 
     // Todo: 현재 원큐오더 웹하고 상의가 되지 않아 해당 부분에 대해 논의를 진행하고 작성 예정
