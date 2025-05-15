@@ -8,15 +8,23 @@ import com.fisa.pg.entity.transaction.Transaction;
 import com.fisa.pg.entity.transaction.TransactionStatus;
 import com.fisa.pg.entity.user.Merchant;
 import com.fisa.pg.exception.PaymentDuplicateException;
+import com.fisa.pg.feign.client.AppCardClient;
+import com.fisa.pg.feign.client.WonQClient;
 import com.fisa.pg.repository.PaymentRepository;
 import com.fisa.pg.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
+
+    private final AppCardClient appCardClient;
+
+    private final WonQClient wonQClient;
 
     private final PaymentRepository paymentRepository;
 
@@ -62,4 +70,20 @@ public class PaymentService {
         // 4. 응답 반환
         return PaymentCreateResponseDto.from(payment, merchant);
     }
+
+    /**
+     * 결제 수단에 따른 결제 페이지 URL 생성하는 메서드
+     *
+     * @param payment 결제 정보
+     * @param method  결제 수단
+     * @return 리다이렉트 URL
+     */
+    private String generatePaymentRedirectUrl(Payment payment, String method) {
+        if ("WOORI_APP_CARD".equals(method)) {
+            return "/api/payment/ui/wooricard/" + payment.getId();
+        }
+
+        throw new IllegalArgumentException("지원하지 않는 결제 수단입니다: " + method);
+    }
+
 }
