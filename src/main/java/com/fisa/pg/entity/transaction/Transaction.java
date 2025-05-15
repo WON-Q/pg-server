@@ -130,4 +130,13 @@ public class Transaction {
         }
     }
 
+    /**
+     * 트랜잭션 상태를 업데이트하는 메서드
+     *
+     * @param status 새로운 트랜잭션 상태
+     */
+    public void updateTransactionStatus(TransactionStatus status) {
+        this.transactionStatus = status;
+    }
+
 }
