@@ -3,6 +3,7 @@ package com.fisa.pg.service;
 import com.fisa.pg.dto.request.AppCardPaymentRequestDto;
 import com.fisa.pg.dto.request.PaymentCreateRequestDto;
 import com.fisa.pg.dto.request.PaymentMethodUpdateRequestDto;
+import com.fisa.pg.dto.response.AppCardPaymentResponseDto;
 import com.fisa.pg.dto.response.PaymentCreateResponseDto;
 import com.fisa.pg.dto.response.PaymentMethodUpdateResponseDto;
 import com.fisa.pg.entity.card.BinInfo;
@@ -12,15 +13,18 @@ import com.fisa.pg.entity.payment.PaymentStatus;
 import com.fisa.pg.entity.transaction.Transaction;
 import com.fisa.pg.entity.transaction.TransactionStatus;
 import com.fisa.pg.entity.user.Merchant;
-import com.fisa.pg.exception.*;
+import com.fisa.pg.exception.AppCardAuthenticationFailedException;
+import com.fisa.pg.exception.PaymentDuplicateException;
+import com.fisa.pg.exception.TransactionNotFoundException;
+import com.fisa.pg.exception.UnsupportedIssuerException;
 import com.fisa.pg.feign.client.AppCardClient;
 import com.fisa.pg.feign.client.CardClient;
 import com.fisa.pg.feign.client.WonQClient;
 import com.fisa.pg.feign.dto.appcard.request.AppCardAuthRequestDto;
 import com.fisa.pg.feign.dto.appcard.response.AppCardAuthResponseDto;
 import com.fisa.pg.feign.dto.card.request.CardPaymentApprovalRequestDto;
-import com.fisa.pg.feign.dto.card.response.CardPaymentApprovalResponseDto;
 import com.fisa.pg.feign.dto.card.response.BaseResponse;
+import com.fisa.pg.feign.dto.card.response.CardPaymentApprovalResponseDto;
 import com.fisa.pg.feign.dto.wonq.request.DeepLinkPaymentRequestDto;
 import com.fisa.pg.repository.BinInfoRepository;
 import com.fisa.pg.repository.PaymentRepository;
@@ -144,7 +148,7 @@ public class PaymentService {
      */
     private String generatePaymentRedirectUrl(Payment payment, String method) {
         if ("WOORI_APP_CARD".equals(method)) {
-            return "/api/payment/ui/wooricard/" + payment.getId();
+            return "/payment/ui/wooricard/" + payment.getId();
         }
 
         throw new IllegalArgumentException("지원하지 않는 결제 수단입니다: " + method);
@@ -156,10 +160,9 @@ public class PaymentService {
      * 결제흐름의 16, 17, 18, 19번 단계에 해당하는 처리를 수행합니다.
      *
      * @param request 앱카드 인증 요청 정보
-     * @return 앱카드 실행을 위한 딥링크
      */
     @Transactional
-    public String requestAppCardAuth(AppCardAuthRequestDto request) {
+    public void requestAppCardAuth(AppCardAuthRequestDto request) {
         log.info("앱카드 인증 요청 시작: txnId={}, amount={}", request.getTxnId(), request.getAmount());
 
         try {
@@ -183,9 +186,6 @@ public class PaymentService {
             // 원큐 오더 서버에 딥링크 전송
             wonQClient.sendDeepLink(deepLinkRequest);
             log.info("딥링크를 원큐 오더 서버에 전송 완료: txnId={}", request.getTxnId());
-
-            return deepLink;
-
         } catch (Exception e) {
             log.error("앱카드 인증 요청 처리 중 오류 발생: txnId={}, error={}", request.getTxnId(), e.getMessage(), e);
             throw new RuntimeException("앱카드 인증 요청 처리 중 오류가 발생했습니다", e);
@@ -195,7 +195,7 @@ public class PaymentService {
     /**
      * 앱카드 인증 결과를 처리하고 카드사 승인을 진행하는 메서드
      * <br/>
-     * 이 메서드는 결제 흐름 중 <b>32-37번째 단계</b>를 처리합니다.
+     * 이 메서드는 결제 흐름 중 <b>32-38번째 단계</b>를 처리합니다.
      * 자세한 내용은 프로젝트 내 {@code docs/payment-flow.md} 문서를 참조해 주세요.
      *
      * @param authResult 앱카드 인증 결과 DTO
@@ -278,6 +278,16 @@ public class PaymentService {
                 approvalResponse.getPaymentStatus() == PaymentStatus.SUCCEEDED ? TransactionStatus.APPROVED : TransactionStatus.FAILED
         );
         transactionRepository.save(transaction);
+
+        // 9. 앱카드 서버에 결제 결과 전송 (38단계)
+        AppCardPaymentResponseDto appCardResult = AppCardPaymentResponseDto.builder()
+            .txnId(transactionId)
+            .paymentStatus(payment.getPaymentStatus())
+            .build();
+
+        appCardClient.sendPaymentResult(appCardResult);
+        log.info("앱카드 서버에 결제 결과 전송 완료: txnId={}, status={}",
+            transactionId, payment.getPaymentStatus());
 
         // Todo: 9. 외부 시스템(webhook url)에 결제 결과 전송 -> AOP로 구현
 
