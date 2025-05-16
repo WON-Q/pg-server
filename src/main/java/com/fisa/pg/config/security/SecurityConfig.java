@@ -1,6 +1,7 @@
 package com.fisa.pg.config.security;
 
 import com.fisa.pg.config.security.filter.BasicAuthenticationFilter;
+import com.fisa.pg.config.security.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +19,8 @@ public class SecurityConfig {
 
     private final BasicAuthenticationFilter basicAuthenticationFilter;
 
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
@@ -31,6 +34,7 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // JWT 사용으로 세션 비활성화.
                 )
+                .addFilterBefore(jwtAuthenticationFilter, BasicAuthenticationFilter.class) // BasicAuthenticationFilter 필터 전에 JWT 필터 추가
                 .addFilterBefore(basicAuthenticationFilter, UsernamePasswordAuthenticationFilter.class) // UsernamePasswordAuthenticationFilter 필터 전에 Basic 필터 추가
                 .build();
 
