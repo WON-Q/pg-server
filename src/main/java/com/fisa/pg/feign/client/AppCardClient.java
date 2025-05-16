@@ -1,6 +1,7 @@
 package com.fisa.pg.feign.client;
 
 import com.fisa.pg.config.feign.AppCardClientConfig;
+import com.fisa.pg.dto.response.AppCardPaymentResponseDto;
 import com.fisa.pg.feign.dto.appcard.request.AppCardAuthRequestDto;
 import com.fisa.pg.feign.dto.appcard.response.AppCardAuthResponseDto;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -25,5 +26,17 @@ public interface AppCardClient {
     AppCardAuthResponseDto requestAuth(
             @RequestBody AppCardAuthRequestDto request
     );
+
+
+    /**
+     * 앱카드 결제 결과 전송 API
+     * <br/>
+     * 이 API는 결제 흐름 중 <b>38번째 단계</b>에서 사용됩니다.
+     * 자세한 내용은 프로젝트 내 {@code docs/payment-flow.md} 문서를 참조해 주세요.
+     *
+     * @param response 결제 결과 정보
+     */
+    @PostMapping("/payment/result")
+    void sendPaymentResult(@RequestBody AppCardPaymentResponseDto response);
 
 }
