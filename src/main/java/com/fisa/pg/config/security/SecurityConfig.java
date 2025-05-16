@@ -26,7 +26,7 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable) // Rest API 사용으로 CSRF 비활성화.
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("/auth/**", "/actuator/health").permitAll() // 인증이 필요 없는 API
+                        .requestMatchers("/api/auth/**", "/actuator/health").permitAll() // 인증이 필요 없는 API
                         .requestMatchers("/api/admin/**").hasRole("ADMIN") // 관리자 전용 API
                         .requestMatchers("/api/**").hasRole("MERCHANT") // 가맹점 전용 API
                         .anyRequest().authenticated() // 기타 모든 요청은 인증 필요
