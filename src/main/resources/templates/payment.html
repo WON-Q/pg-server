@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>우리 결제 서비스</title>
+    <style>
+        /* Reset CSS */
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+          font-family: "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+        }
+
+        body {
+          background-color: #f6fbff;
+          color: #101010;
+        }
+
+        /* Close Button */
+        .close-btn {
+          position: absolute;
+          top: 15px;
+          right: 15px;
+          font-size: 24px;
+          color: #888;
+          background: none;
+          border: none;
+          cursor: pointer;
+          z-index: 100;
+        }
+
+        /* Header */
+        .payment-header {
+          text-align: center;
+          margin: 30px 0 20px;
+          padding: 0 20px;
+        }
+
+        .payment-header h1 {
+          font-size: 24px;
+          color: #0067ac;
+          margin-bottom: 10px;
+        }
+
+        .payment-header p {
+          font-size: 16px;
+          color: #555;
+        }
+
+        /* Payment Container */
+        .payment-container {
+          margin: 20px auto;
+          max-width: 450px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 0 20px;
+        }
+
+        /* Payment Options */
+        .payment-options {
+          width: 100%;
+          display: grid;
+          grid-gap: 15px;
+          margin-bottom: 40px;
+        }
+
+        /* Payment Button */
+        .payment-button {
+          width: 100%;
+          background-color: white;
+          color: #0067ac;
+          border: 2px solid #0067ac;
+          border-radius: 12px;
+          padding: 20px;
+          font-size: 18px;
+          font-weight: bold;
+          text-align: left;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          transition: all 0.2s ease;
+        }
+
+        .payment-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .woori-pay-button {
+          background-color: #0067ac;
+          color: white;
+        }
+
+        .woori-bank-button {
+          background-color: white;
+          color: #0067ac;
+        }
+
+        .woori-card-button {
+          background-color: white;
+          color: #0067ac;
+        }
+
+        .button-content {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .logo-icon {
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
+          background-color: #1a8ad4;
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: bold;
+          font-size: 16px;
+        }
+
+        .woori-pay-button .logo-icon {
+          background-color: white;
+          color: #0067ac;
+        }
+
+        .payment-text {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .woori-logo-text {
+          font-size: 18px;
+          font-weight: bold;
+        }
+
+        .payment-desc {
+          font-size: 13px;
+          font-weight: normal;
+          margin-top: 4px;
+          opacity: 0.8;
+        }
+
+        .button-arrow {
+          color: inherit;
+          font-size: 24px;
+        }
+
+        /* Other Payment Methods Section */
+        .other-methods {
+          width: 100%;
+          margin-top: 10px;
+        }
+
+        .other-methods-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          grid-gap: 12px;
+        }
+
+        .other-method-button {
+          background-color: #ffffff;
+          border: 1px solid #cde5ff;
+          border-radius: 12px;
+          padding: 15px;
+          text-align: center;
+          font-size: 14px;
+          color: #555;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .other-method-button:hover {
+          background-color: #f5f9ff;
+        }
+
+        /* Footer */
+        .footer {
+          width: 100%;
+          text-align: center;
+          padding: 20px;
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          background-color: rgba(246, 251, 255, 0.9);
+          border-top: 1px solid #cde5ff;
+        }
+
+        .help-text {
+          font-size: 14px;
+          color: #666;
+        }
+
+        .help-text a {
+          color: #0067ac;
+          text-decoration: none;
+          font-weight: bold;
+        }
+    </style>
+</head>
+<script>
+  // 폼 제출 확인용 스크립트
+  document.getElementById("cardPaymentForm").addEventListener("submit", function(event) {
+    console.log("폼 제출 시작: paymentId =", document.querySelector('input[name="paymentId"]').value);
+
+    // 폼 상태 표시
+    const submitButton = this.querySelector('button[type="submit"]');
+    submitButton.innerHTML = '<div class="button-content"><div class="logo-icon">우</div><div class="payment-text"><span class="woori-logo-text">처리 중...</span></div></div>';
+
+    // 폼 제출 진행 확인을 위해 fetch API 사용
+    event.preventDefault();
+
+    fetch(this.action, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: new URLSearchParams(new FormData(this))
+    })
+    .then(response => {
+      console.log("서버 응답 상태:", response.status);
+      return response.json();
+    })
+    .then(data => {
+      console.log("서버 응답 데이터:", data);
+      alert("결제 요청이 처리되었습니다: " + JSON.stringify(data));
+
+      // 버튼 상태 복원
+      submitButton.innerHTML = '<div class="button-content"><div class="logo-icon">우</div><div class="payment-text"><span class="woori-logo-text">우리카드로 결제하기</span><span class="payment-desc">우리카드 앱카드 간편결제</span></div></div><span class="button-arrow">›</span>';
+    })
+    .catch(error => {
+      console.error("오류 발생:", error);
+      alert("결제 처리 중 오류가 발생했습니다: " + error);
+
+      // 버튼 상태 복원
+      submitButton.innerHTML = '<div class="button-content"><div class="logo-icon">우</div><div class="payment-text"><span class="woori-logo-text">우리카드로 결제하기</span><span class="payment-desc">우리카드 앱카드 간편결제</span></div></div><span class="button-arrow">›</span>';
+    });
+  });
+</script>
+<body>
+<!-- Close Button -->
+<button class="close-btn">✕</button>
+
+<!-- Payment Header -->
+<div class="payment-header">
+    <h1>결제 방법 선택</h1>
+    <p>원하시는 우리 결제 방법을 선택해주세요</p>
+</div>
+
+<!-- Payment Container with Multiple Options -->
+<div class="payment-container">
+    <div class="payment-options">
+        <button class="payment-button woori-pay-button">
+            <div class="button-content">
+                <div class="logo-icon">우</div>
+                <div class="payment-text">
+                    <span class="woori-logo-text">우리Pay로 결제하기</span>
+                    <span class="payment-desc">간편하고 빠른 우리페이 결제</span>
+                </div>
+            </div>
+            <span class="button-arrow">›</span>
+        </button>
+
+        <button class="payment-button woori-bank-button">
+            <div class="button-content">
+                <div class="logo-icon">우</div>
+                <div class="payment-text">
+                    <span class="woori-logo-text">우리뱅크로 결제하기</span>
+                    <span class="payment-desc">우리은행 계좌 이용 결제</span>
+                </div>
+            </div>
+            <span class="button-arrow">›</span>
+        </button>
+
+        <form
+                id="cardPaymentForm"
+                th:action="@{/payment/ui/wooricard/process}"
+                method="post"
+        >
+            <input type="hidden" name="paymentId" th:value="${paymentId}" />
+            <button type="submit" class="payment-button woori-card-button">
+                <div class="button-content">
+                    <div class="logo-icon">우</div>
+                    <div class="payment-text">
+                        <span class="woori-logo-text">우리카드로 결제하기</span>
+                        <span class="payment-desc">우리카드 앱카드 간편결제</span>
+                    </div>
+                </div>
+                <span class="button-arrow">›</span>
+            </button>
+        </form>
+    </div>
+
+    <div class="other-methods">
+        <div class="other-methods-grid">
+            <div class="other-method-button">앱 없이 결제</div>
+            <div class="other-method-button">결제코드 보기</div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+    <div class="help-text">
+        앱 설치가 필요하신가요? <a href="#">도움말 보기</a>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    // Close button
+    document
+      .querySelector(".close-btn")
+      .addEventListener("click", function () {
+        // In a real app this would close the modal
+        alert("결제 취소됨");
+      });
+
+    // Payment buttons
+    document
+      .querySelector(".woori-pay-button")
+      .addEventListener("click", function () {
+        alert("우리Pay 결제를 진행합니다");
+      });
+
+    document
+      .querySelector(".woori-bank-button")
+      .addEventListener("click", function () {
+        alert("우리뱅크 결제를 준비 중입니다");
+      });
+
+    // Other methods buttons
+    document.querySelectorAll(".other-method-button").forEach((button) => {
+      button.addEventListener("click", function () {
+        alert(this.textContent + " 기능을 준비 중입니다");
+      });
+    });
+</script>
+</body>
+</html>
