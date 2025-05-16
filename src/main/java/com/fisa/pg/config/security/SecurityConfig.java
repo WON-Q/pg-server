@@ -23,7 +23,10 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable) // Rest API 사용으로 CSRF 비활성화.
                 .authorizeHttpRequests(request -> request
-                        .anyRequest().permitAll() // Fixme: 현재는 모든 요청에 대해 허용하고 있지만, 추후 수정 필요
+                        .requestMatchers("/auth/**", "/actuator/health").permitAll() // 인증이 필요 없는 API
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN") // 관리자 전용 API
+                        .requestMatchers("/api/**").hasRole("MERCHANT") // 가맹점 전용 API
+                        .anyRequest().authenticated() // 기타 모든 요청은 인증 필요
                 )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // JWT 사용으로 세션 비활성화.
