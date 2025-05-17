@@ -36,8 +36,8 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // JWT 사용으로 세션 비활성화.
                 )
-                .addFilterBefore(jwtAuthenticationFilter, PaymentTokenAuthenticationFilter.class) // BasicAuthenticationFilter 필터 전에 JWT 필터 추가
                 .addFilterBefore(paymentTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class) // UsernamePasswordAuthenticationFilter 필터 전에 Basic 필터 추가
+                .addFilterBefore(jwtAuthenticationFilter, PaymentTokenAuthenticationFilter.class) // BasicAuthenticationFilter 필터 전에 JWT 필터 추가
                 .build();
 
     }
