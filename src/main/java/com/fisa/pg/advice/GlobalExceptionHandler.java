@@ -1,6 +1,7 @@
 package com.fisa.pg.advice;
 
 import com.fisa.pg.dto.response.BaseResponse;
+import com.fisa.pg.exception.InvalidCredentialsException;
 import com.fisa.pg.exception.PaymentDuplicateException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(BaseResponse.onConflict(e.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<BaseResponse<Void>> handleInvalidCredentialsException(InvalidCredentialsException e) {
+        log.error("잘못된 인증 정보 오류 발생: {}", e.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(BaseResponse.onUnauthorized(e.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

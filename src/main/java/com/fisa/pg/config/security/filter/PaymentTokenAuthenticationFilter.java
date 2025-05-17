@@ -27,7 +27,7 @@ import java.util.Collections;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class BasicAuthenticationFilter extends OncePerRequestFilter {
+public class PaymentTokenAuthenticationFilter extends OncePerRequestFilter {
 
     private final ApiKeyRepository apiKeyRepository;
 
