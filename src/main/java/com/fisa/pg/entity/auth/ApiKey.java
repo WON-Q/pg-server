@@ -71,4 +71,12 @@ public class ApiKey {
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
+    /**
+     * API 키 비활성화 메서드
+     */
+    public void deactivate() {
+        this.isActive = false;
+    }
+
+
 }
