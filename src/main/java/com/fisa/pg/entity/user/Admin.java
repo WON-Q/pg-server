@@ -26,12 +26,6 @@ public class Admin {
     private Long id;
 
     /**
-     * 관리자 계정 ID (로그인 아이디로 사용)
-     */
-    @Column(name = "admin_id", nullable = false, unique = true)
-    private String adminId;
-
-    /**
      * 관리자 비밀번호 (암호화하여 저장)
      */
     @Column(nullable = false)
@@ -44,7 +38,7 @@ public class Admin {
     private String name;
 
     /**
-     * 관리자 이메일
+     * 관리자 이메일 (로그인 아이디로 사용)
      */
     @Column(nullable = false, unique = true)
     private String email;
