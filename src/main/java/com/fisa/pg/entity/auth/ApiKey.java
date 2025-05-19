@@ -71,4 +71,35 @@ public class ApiKey {
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
+    /**
+     * API 키 비활성화 메서드
+     */
+    public void deactivate() {
+        this.isActive = false;
+    }
+
+    /**
+     * 새로운 API 키를 생성합니다.
+     *
+     * @param merchant  API 키를 발급받는 가맹점
+     * @param name      API 키 이름
+     * @param accessKey 액세스 키
+     * @param secretKey 시크릿 키
+     * @param expiresAt 만료일
+     * @return 생성된 API 키 엔티티
+     */
+    public static ApiKey createNewApiKey(Merchant merchant, String name,
+                                         String accessKey, String secretKey,
+                                         LocalDateTime expiresAt) {
+        return ApiKey.builder()
+                .merchant(merchant)
+                .name(name)
+                .accessKey(accessKey)
+                .secretKey(secretKey)
+                .issuedAt(LocalDateTime.now())
+                .expiresAt(expiresAt)
+                .isActive(true)
+                .build();
+    }
+
 }
