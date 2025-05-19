@@ -32,12 +32,12 @@ public class WebhookController {
      * @return 웹훅 응답 DTO
      */
     @PostMapping("/webhook")
-    public ResponseEntity<CreateWebhookResponseDto> createWebhook(
+    public ResponseEntity<BaseResponse<CreateWebhookResponseDto>> createWebhook(
             @AuthenticationPrincipal Merchant merchant,
             @RequestBody CreateWebhookRequestDto requestDto
     ) {
         CreateWebhookResponseDto response = webhookService.createWebhook(merchant.getId(), requestDto);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(BaseResponse.onSuccess("가맹점 웹훅 생성 성공", response));
     }
 
     /**
