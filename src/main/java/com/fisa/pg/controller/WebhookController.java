@@ -1,6 +1,7 @@
 package com.fisa.pg.controller;
 
 import com.fisa.pg.dto.request.CreateWebhookRequestDto;
+import com.fisa.pg.dto.response.BaseResponse;
 import com.fisa.pg.dto.response.CreateWebhookResponseDto;
 import com.fisa.pg.entity.user.Merchant;
 import com.fisa.pg.service.WebhookService;
@@ -37,5 +38,21 @@ public class WebhookController {
     ) {
         CreateWebhookResponseDto response = webhookService.createWebhook(merchant.getId(), requestDto);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 가맹점 웹훅 조회 API
+     * <br/>
+     * 가맹점의 웹훅 설정 정보를 조회합니다.
+     *
+     * @param merchant 로그인한 가맹점
+     * @return 웹훅 응답 DTO
+     */
+    @GetMapping("/webhook")
+    public ResponseEntity<BaseResponse<CreateWebhookResponseDto>> getWebhook(
+            @AuthenticationPrincipal Merchant merchant
+    ) {
+        CreateWebhookResponseDto response = CreateWebhookResponseDto.from(merchant);
+        return ResponseEntity.ok(BaseResponse.onSuccess("가맹점 웹훅 조회 성공", response));
     }
 }
