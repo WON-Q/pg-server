@@ -4,9 +4,6 @@ import com.fisa.pg.entity.auth.ApiKey;
 import com.fisa.pg.repository.ApiKeyRepository;
 import lombok.Builder;
 import lombok.Getter;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
