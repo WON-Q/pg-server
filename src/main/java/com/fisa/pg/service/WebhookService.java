@@ -33,6 +33,7 @@ public class WebhookService {
         String webhookSecretKey = StringUtil.generateRandomString(20);
         merchant.updateWebhookUrl(requestDto.getUrl());
         merchant.updateWebhookSecretKey(webhookSecretKey);
+        merchant.updateWebhookRegisteredAt();
 
         return CreateWebhookResponseDto.from(merchant);
     }
