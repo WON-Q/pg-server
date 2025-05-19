@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/merchant")
 @RequiredArgsConstructor
-public class WebhookController {
+public class MerchantWebhookController {
 
     private final WebhookService webhookService;
 
