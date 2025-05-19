@@ -1,10 +1,10 @@
 package com.fisa.pg.entity.user;
 
+import com.fisa.pg.entity.auth.ApiKey;
 import com.fisa.pg.entity.payment.Payment;
+import com.fisa.pg.entity.settlement.MerchantSettlement;
 import com.fisa.pg.entity.transaction.Transaction;
 import com.fisa.pg.entity.transaction.TransactionLog;
-import com.fisa.pg.entity.settlement.MerchantSettlement;
-import com.fisa.pg.entity.auth.ApiKey;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -81,8 +81,21 @@ public class Merchant {
     /**
      * Transaction 상태가 변경될 때마다 PG사가 가맹점에 전송하는 Webhook URL
      */
-    @Column(name = "webhook_url", nullable = false)
+    @Column(name = "webhook_url", nullable = true)
     private String webhookUrl;
+
+    /**
+     * 웹훅 시크릿 키
+     */
+    @Column(name = "webhook_secret_key", nullable = true)
+    private String webhookSecretKey;
+
+    /**
+     * 웹훅 활성화 여부
+     * true: 활성화, false: 비활성화
+     */
+    @Column(name = "webhook_enabled", nullable = true)
+    private boolean isWebhookEnabled;
 
     /**
      * 마지막 로그인 시각
@@ -125,7 +138,7 @@ public class Merchant {
     @OneToMany(mappedBy = "merchant", cascade = CascadeType.ALL)
     @Builder.Default
     private List<TransactionLog> transactionLogs = new ArrayList<>();
-    
+
     /**
      * 가맹점 정산 정보 목록 (1:N 관계)
      * 한 가맹점에 여러 정산 내역이 존재할 수 있음
@@ -133,7 +146,7 @@ public class Merchant {
     @OneToMany(mappedBy = "merchant", cascade = CascadeType.ALL)
     @Builder.Default
     private List<MerchantSettlement> settlements = new ArrayList<>();
-    
+
     /**
      * 가맹점 API 키 목록 (1:N 관계)
      * 한 가맹점은 여러 API 키를 가질 수 있음 (예: 운영용, 테스트용)
@@ -166,4 +179,21 @@ public class Merchant {
     public void updateLoginTime() {
         this.lastLoginAt = LocalDateTime.now();
     }
+
+    /**
+     * Webhook URL 업데이트
+     */
+    public void updateWebhookUrl(String webhookUrl) {
+        this.webhookUrl = webhookUrl;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Webhook 시크릿 키 업데이트
+     */
+    public void updateWebhookSecretKey(String webhookSecretKey) {
+        this.webhookSecretKey = webhookSecretKey;
+        this.updatedAt = LocalDateTime.now();
+    }
+
 }

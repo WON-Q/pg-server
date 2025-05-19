@@ -1,0 +1,41 @@
+package com.fisa.pg.controller;
+
+import com.fisa.pg.dto.request.CreateWebhookRequestDto;
+import com.fisa.pg.dto.response.CreateWebhookResponseDto;
+import com.fisa.pg.entity.user.Merchant;
+import com.fisa.pg.service.WebhookService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+/**
+ * 가맹점 웹훅 관련 API
+ * <br/>
+ * 가맹점의 웹훅을 생성하는 API를 제공합니다.
+ */
+@RestController
+@RequestMapping("/api/merchant")
+@RequiredArgsConstructor
+public class WebhookController {
+
+    private final WebhookService webhookService;
+
+    /**
+     * 가맹점 웹훅 생성 API
+     * <br/>
+     * 가맹점의 웹훅을 생성합니다.
+     *
+     * @param merchant   웹훅을 생성할 가맹점
+     * @param requestDto 웹훅 요청 DTO
+     * @return 웹훅 응답 DTO
+     */
+    @PostMapping("/webhook")
+    public ResponseEntity<CreateWebhookResponseDto> createWebhook(
+            @AuthenticationPrincipal Merchant merchant,
+            @RequestBody CreateWebhookRequestDto requestDto
+    ) {
+        CreateWebhookResponseDto response = webhookService.createWebhook(merchant.getId(), requestDto);
+        return ResponseEntity.ok(response);
+    }
+}

@@ -7,7 +7,7 @@ import com.fisa.pg.entity.user.Merchant;
 import com.fisa.pg.exception.ApiKeyAccessDeniedException;
 import com.fisa.pg.exception.ApiKeyNotFoundException;
 import com.fisa.pg.repository.ApiKeyRepository;
-import com.fisa.pg.utils.ApiKeyGenerator;
+import com.fisa.pg.utils.StringUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -52,8 +52,8 @@ public class ApiKeyService {
     @PostAuthorize("hasRole('MERCHANT')")
     @Transactional
     public CreateApiKeyResponseDto issueApiKey(String keyName, Merchant merchant, LocalDateTime expiresAt) {
-        String accessKey = ApiKeyGenerator.generateAccessKey();
-        String secretKey = ApiKeyGenerator.generateSecretKey();
+        String accessKey = StringUtil.generateRandomString(20);
+        String secretKey = StringUtil.generateRandomString(40);
 
         ApiKey apiKey = ApiKey.builder()
                 .merchant(merchant)
