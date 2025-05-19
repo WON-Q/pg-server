@@ -98,6 +98,12 @@ public class Merchant {
     private boolean isWebhookEnabled;
 
     /**
+     * 웹훅 등록 시각
+     */
+    @Column(name = "webhook_registered_at", nullable = true)
+    private LocalDateTime webhookRegisteredAt;
+
+    /**
      * 마지막 로그인 시각
      */
     @Column(name = "last_login_at", nullable = true)
@@ -193,6 +199,14 @@ public class Merchant {
      */
     public void updateWebhookSecretKey(String webhookSecretKey) {
         this.webhookSecretKey = webhookSecretKey;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Webhook 등록 시각을 업데이트 하는 메서드
+     */
+    public void updateWebhookRegisteredAt() {
+        this.webhookRegisteredAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
 
