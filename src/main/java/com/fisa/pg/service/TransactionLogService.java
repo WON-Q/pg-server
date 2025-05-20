@@ -27,27 +27,9 @@ public class TransactionLogService {
     private final TransactionLogRepository transactionLogRepository;
 
     /**
-     * 가맹점의 트랜잭션 로그 목록 조회 (가맹점용)
+     * 가맹점 트랜잭션 로그 조회 (통합 메서드)
      * <p>
-     * 가맹점 자신의 트랜잭션 로그를 조회합니다.
-     * </p>
-     *
-     * @param merchant 인증된 가맹점
-     * @param pageable 페이징 정보
-     * @return 트랜잭션 로그 응답 DTO 페이지
-     */
-    @PostAuthorize("hasRole('MERCHANT')")
-    @Transactional(readOnly = true)
-    public Page<TransactionLogResponseDto> getMerchantTransactionLogs(Merchant merchant, Pageable pageable) {
-        log.info("가맹점 트랜잭션 로그 조회: 가맹점ID={}", merchant.getId());
-        Page<TransactionLog> logs = transactionLogRepository.findByMerchantOrderByCreatedAtDesc(merchant, pageable);
-        return logs.map(TransactionLogResponseDto::from);
-    }
-
-    /**
-     * 가맹점 트랜잭션 로그 필터링 조회
-     * <p>
-     * 다양한 조건으로 트랜잭션 로그를 필터링하여 조회합니다.
+     * 필터링 조건 유무에 따라 기본 조회 또는 필터링 조회를 수행합니다.
      * </p>
      *
      * @param merchant   가맹점 정보
@@ -57,11 +39,11 @@ public class TransactionLogService {
      * @param methods    결제 수단 목록 (null 가능)
      * @param searchTerm 검색어 (null 가능)
      * @param pageable   페이징 정보
-     * @return 필터링된 트랜잭션 로그 목록
+     * @return 트랜잭션 로그 응답 DTO 페이지
      */
     @PostAuthorize("hasRole('MERCHANT')")
     @Transactional(readOnly = true)
-    public Page<TransactionLogResponseDto> getMerchantFilteredTransactionLogs(
+    public Page<TransactionLogResponseDto> getMerchantTransactionLogs(
             Merchant merchant,
             LocalDateTime startDate,
             LocalDateTime endDate,
@@ -70,47 +52,69 @@ public class TransactionLogService {
             String searchTerm,
             Pageable pageable) {
 
-        log.info("가맹점 트랜잭션 로그 필터링 조회: 가맹점ID={}, 기간={} ~ {}, 상태={}, 결제수단={}, 검색어={}",
-                merchant.getId(), startDate, endDate, statuses, methods, searchTerm);
+        log.info("가맹점 트랜잭션 로그 조회: 가맹점ID={}, 필터링={}",
+                merchant.getId(),
+                hasFilters(startDate, endDate, statuses, methods, searchTerm));
 
-        // 기본 조건: 가맹점 ID로 필터링
-        Specification<TransactionLog> spec = Specification.where(
-                (root, query, cb) -> cb.equal(root.get("merchant"), merchant));
+        // 필터 파라미터가 전혀 없는 경우 기본 조회, 아니면 필터링 조회
+        if (!hasFilters(startDate, endDate, statuses, methods, searchTerm)) {
+            Page<TransactionLog> logs = transactionLogRepository.findByMerchantOrderByCreatedAtDesc(merchant, pageable);
+            return logs.map(TransactionLogResponseDto::from);
+        } else {
+            // 기본 조건: 가맹점 ID로 필터링
+            Specification<TransactionLog> spec = Specification.where(
+                    (root, query, cb) -> cb.equal(root.get("merchant"), merchant));
 
-        // 날짜 범위 필터
-        if (startDate != null && endDate != null) {
-            spec = spec.and((root, query, cb) ->
-                    cb.between(root.get("createdAt"), startDate, endDate));
+            // 날짜 범위 필터
+            if (startDate != null && endDate != null) {
+                spec = spec.and((root, query, cb) ->
+                        cb.between(root.get("createdAt"), startDate, endDate));
+            }
+
+            // 상태 필터
+            if (statuses != null && !statuses.isEmpty()) {
+                spec = spec.and((root, query, cb) -> root.get("status").in(statuses));
+            }
+
+            // 결제 수단 필터
+            if (methods != null && !methods.isEmpty()) {
+                spec = spec.and((root, query, cb) ->
+                        root.get("transaction").get("method").in(methods));
+            }
+
+            // 검색어 필터 (트랜잭션 ID나 고객명)
+            if (searchTerm != null && !searchTerm.isBlank()) {
+                spec = spec.and((root, query, cb) ->
+                        cb.or(
+                                cb.like(root.get("transaction").get("transactionId"), "%" + searchTerm + "%"),
+                                cb.like(root.get("message"), "%" + searchTerm + "%")
+                        ));
+            }
+
+            // 정렬 기본값: 생성일시 내림차순
+            Page<TransactionLog> logs = transactionLogRepository.findAll(spec,
+                    pageable.getSort().isEmpty() ?
+                            PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                                    Sort.by(Sort.Direction.DESC, "createdAt")) :
+                            pageable);
+
+            return logs.map(TransactionLogResponseDto::from);
         }
+    }
 
-        // 상태 필터
-        if (statuses != null && !statuses.isEmpty()) {
-            spec = spec.and((root, query, cb) -> root.get("status").in(statuses));
-        }
-
-        // 결제 수단 필터
-        if (methods != null && !methods.isEmpty()) {
-            spec = spec.and((root, query, cb) ->
-                    root.get("transaction").get("method").in(methods));
-        }
-
-        // 검색어 필터 (트랜잭션 ID나 고객명)
-        if (searchTerm != null && !searchTerm.isBlank()) {
-            spec = spec.and((root, query, cb) ->
-                    cb.or(
-                            cb.like(root.get("transaction").get("transactionId"), "%" + searchTerm + "%"),
-                            cb.like(root.get("message"), "%" + searchTerm + "%")
-                    ));
-        }
-
-        // 정렬 기본값: 생성일시 내림차순
-        Page<TransactionLog> logs = transactionLogRepository.findAll(spec,
-                pageable.getSort().isEmpty() ?
-                        PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
-                                Sort.by(Sort.Direction.DESC, "createdAt")) :
-                        pageable);
-
-        return logs.map(TransactionLogResponseDto::from);
+    /**
+     * 필터링 조건이 있는지 확인
+     */
+    private boolean hasFilters(
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            List<TransactionStatus> statuses,
+            List<String> methods,
+            String searchTerm) {
+        return startDate != null || endDate != null ||
+                (statuses != null && !statuses.isEmpty()) ||
+                (methods != null && !methods.isEmpty()) ||
+                (searchTerm != null && !searchTerm.isBlank());
     }
 
 
