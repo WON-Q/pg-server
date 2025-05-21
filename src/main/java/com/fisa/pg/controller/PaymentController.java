@@ -77,7 +77,7 @@ public class PaymentController {
      * @param request 결제 인증 결과 및 승인 요청 정보
      * @return 결제 승인 결과
      */
-    @PostMapping("/appcard/approval")
+    @PostMapping("/payments/authorize")
     public ResponseEntity<BaseResponse<CardPaymentApprovalResponseDto>> processAppCardPaymentApproval(
             @RequestBody AppCardPaymentRequestDto request
     ) {
