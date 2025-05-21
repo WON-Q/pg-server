@@ -5,6 +5,7 @@ import com.fisa.pg.config.security.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -20,31 +21,79 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final PaymentTokenAuthenticationFilter paymentTokenAuthenticationFilter;
-
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    // 공통 설정을 추출한 메서드
+    private HttpSecurity configureCommon(HttpSecurity http) throws Exception {
         return http
-                .csrf(AbstractHttpConfigurer::disable) // Rest API 사용으로 CSRF 비활성화.
-                .authorizeHttpRequests(request -> request
-                        .requestMatchers("/api/auth/**", "/actuator/health").permitAll() // 인증이 필요 없는 API
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN") // 관리자 전용 API
-                        .requestMatchers("/api/**").hasRole("MERCHANT") // 가맹점 전용 API
-                        .anyRequest().authenticated() // 기타 모든 요청은 인증 필요
-                )
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // JWT 사용으로 세션 비활성화.
-                )
-                .addFilterBefore(paymentTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class) // UsernamePasswordAuthenticationFilter 필터 전에 결제 토큰 검증 필터 추가
-                .addFilterBefore(jwtAuthenticationFilter, PaymentTokenAuthenticationFilter.class) // 결제 토큰 검증 필터 전에 JWT 필터 추가
-                .build();
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+    }
 
+    @Bean
+    @Order(1) // 앱카드 API 관련 필터 체인
+    public SecurityFilterChain appCardFilterChain(HttpSecurity http) throws Exception {
+        return configureCommon(http)
+                .securityMatcher("/api/appcard/**", "/api/payment/appcard/**")
+                .authorizeHttpRequests(request -> request.anyRequest().permitAll())
+                .build();
+    }
+
+    @Bean
+    @Order(2) // 주문 생성 - Payment Token 관련 필터 체인
+    public SecurityFilterChain paymentTokenFilterChain(HttpSecurity http) throws Exception {
+        return configureCommon(http)
+                .securityMatcher("/api/payment/**", "/api/order/**")
+                .authorizeHttpRequests(request -> request.anyRequest().authenticated())
+                .addFilterBefore(paymentTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
+
+    @Bean
+    @Order(3) // JWT 토큰 - 대시보드 관련 필터 체인
+    public SecurityFilterChain jwtFilterChain(HttpSecurity http) throws Exception {
+        return configureCommon(http)
+                .securityMatcher("/api/users/dashboard/**", "/api/admin/**", "/api/merchant/**")
+                .authorizeHttpRequests(request -> request
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/merchant/**").hasRole("MERCHANT")
+                        .anyRequest().hasAnyRole("ADMIN", "MERCHANT"))
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
+
+    @Bean
+    @Order(4) // Opaque 토큰 필터 체인
+    public SecurityFilterChain opaqueTokenFilterChain(HttpSecurity http) throws Exception {
+        return configureCommon(http)
+                .securityMatcher("/api/external/**")
+                .authorizeHttpRequests(request -> request.anyRequest().authenticated())
+                // 여기에 Opaque 토큰 필터 추가 필요
+                .build();
+    }
+
+    @Bean
+    @Order(5) // 인증이 필요 없는 기본 요청용 필터 체인
+    public SecurityFilterChain defaultFilterChain(HttpSecurity http) throws Exception {
+        return configureCommon(http)
+                .securityMatcher("/api/auth/**", "/actuator/health", "/public/**")
+                .authorizeHttpRequests(request -> request.anyRequest().permitAll())
+                .build();
+    }
+
+    @Bean
+    @Order(6) // 그 외 모든 요청에 대한 필터 체인
+    public SecurityFilterChain fallbackFilterChain(HttpSecurity http) throws Exception {
+        return configureCommon(http)
+                .authorizeHttpRequests(request -> request
+                        .requestMatchers("/api/merchant/**").hasRole("MERCHANT")
+                        .anyRequest().authenticated())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
 }
