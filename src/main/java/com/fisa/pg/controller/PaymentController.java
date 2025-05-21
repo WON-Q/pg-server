@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -77,14 +78,16 @@ public class PaymentController {
      * @return 결제 승인 결과
      */
     @PostMapping("/payments/{txnId}/authorize")
-    public ResponseEntity<BaseResponse<CardPaymentApprovalResponseDto>> processAppCardPaymentApproval(
+    public boolean processAppCardPaymentApproval(
+            @PathVariable String txnId,
             @RequestBody AppCardPaymentRequestDto request
     ) {
 
         log.info("앱카드 결제 승인 요청 수신: 트랜잭션ID={}, 인증여부={}", request.getTxnId(), request.isAuthenticated());
 
-        CardPaymentApprovalResponseDto data = paymentService.processPaymentApproval(request);
-        return ResponseEntity.ok(BaseResponse.onSuccess("결제 승인 요청이 완료되었습니다.", data));
+        //CardPaymentApprovalResponseDto data = paymentService.processPaymentApproval(request);
+        return true;
+        //return ResponseEntity.ok(BaseResponse.onSuccess("결제 승인 요청이 완료되었습니다.", data));
     }
 
 }
