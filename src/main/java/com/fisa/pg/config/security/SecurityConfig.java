@@ -34,7 +34,7 @@ public class SecurityConfig {
     @Order(1) // 앱카드 API 관련 필터 체인
     public SecurityFilterChain appCardFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
-                .securityMatcher("/api/appcard/**", "/api/payment/appcard/**")
+                .securityMatcher("/appcard/**", "/payment/appcard/**", "/payments/{txnId}/authorize/**")
                 .authorizeHttpRequests(request -> request.anyRequest().permitAll())
                 .build();
     }
