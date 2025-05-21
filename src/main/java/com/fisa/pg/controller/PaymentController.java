@@ -77,9 +77,8 @@ public class PaymentController {
      * @param request 결제 인증 결과 및 승인 요청 정보
      * @return 결제 승인 결과
      */
-    @PostMapping("/payments/{txnId}/authorize")
+    @PostMapping("/payments/authorize")
     public boolean processAppCardPaymentApproval(
-            @PathVariable String txnId,
             @RequestBody AppCardPaymentRequestDto request
     ) {
 
