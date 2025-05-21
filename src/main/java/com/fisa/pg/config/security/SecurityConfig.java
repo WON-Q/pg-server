@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -35,7 +36,7 @@ public class SecurityConfig {
     public SecurityFilterChain appCardFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("/payments/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/payments/*/authorize").permitAll()
                         .anyRequest().denyAll())
                 .build();
     }
