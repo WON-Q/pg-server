@@ -78,15 +78,14 @@ public class PaymentController {
      * @return 결제 승인 결과
      */
     @PostMapping("/payments/authorize")
-    public boolean processAppCardPaymentApproval(
+    public ResponseEntity<BaseResponse<CardPaymentApprovalResponseDto>> processAppCardPaymentApproval(
             @RequestBody AppCardPaymentRequestDto request
     ) {
 
         log.info("앱카드 결제 승인 요청 수신: 트랜잭션ID={}, 인증여부={}", request.getTxnId(), request.isAuthenticated());
 
-        //CardPaymentApprovalResponseDto data = paymentService.processPaymentApproval(request);
-        return true;
-        //return ResponseEntity.ok(BaseResponse.onSuccess("결제 승인 요청이 완료되었습니다.", data));
+        CardPaymentApprovalResponseDto data = paymentService.processPaymentApproval(request);
+        return ResponseEntity.ok(BaseResponse.onSuccess("결제 승인 요청이 완료되었습니다.", data));
     }
 
 }

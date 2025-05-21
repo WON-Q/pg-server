@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -35,9 +34,8 @@ public class SecurityConfig {
     @Order(1) // 앱카드 API 관련 필터 체인
     public SecurityFilterChain appCardFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
-                .authorizeHttpRequests(request -> request
-                        .requestMatchers(HttpMethod.POST, "/payments/*/authorize").permitAll()
-                        .anyRequest().denyAll())
+                .securityMatcher("/payments/authorize/**")
+                .authorizeHttpRequests(request -> request.anyRequest().permitAll())
                 .build();
     }
 
@@ -45,9 +43,8 @@ public class SecurityConfig {
     @Order(2) // 주문 생성 - Payment Token 관련 필터 체인
     public SecurityFilterChain paymentTokenFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
-                .authorizeHttpRequests(request -> request
-                        .requestMatchers("/api/payment/**", "/api/order/**").authenticated()
-                        .anyRequest().denyAll())
+                .securityMatcher("/api/payment/**", "/api/order/**")
+                .authorizeHttpRequests(request -> request.anyRequest().authenticated())
                 .addFilterBefore(paymentTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
@@ -56,11 +53,11 @@ public class SecurityConfig {
     @Order(3) // JWT 토큰 - 대시보드 관련 필터 체인
     public SecurityFilterChain jwtFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
+                .securityMatcher("/api/users/dashboard/**", "/api/admin/**", "/api/merchant/**")
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/merchant/**").hasRole("MERCHANT")
-                        .requestMatchers("/api/users/dashboard/**").hasAnyRole("ADMIN", "MERCHANT")
-                        .anyRequest().denyAll())
+                        .anyRequest().hasAnyRole("ADMIN", "MERCHANT"))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
@@ -69,9 +66,8 @@ public class SecurityConfig {
     @Order(4) // Opaque 토큰 필터 체인
     public SecurityFilterChain opaqueTokenFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
-                .authorizeHttpRequests(request -> request
-                        .requestMatchers("/api/external/**").authenticated()
-                        .anyRequest().denyAll())
+                .securityMatcher("/api/external/**")
+                .authorizeHttpRequests(request -> request.anyRequest().authenticated())
                 // 여기에 Opaque 토큰 필터 추가 필요
                 .build();
     }
@@ -80,9 +76,8 @@ public class SecurityConfig {
     @Order(5) // 인증이 필요 없는 기본 요청용 필터 체인
     public SecurityFilterChain defaultFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
-                .authorizeHttpRequests(request -> request
-                        .requestMatchers("/api/auth/**", "/actuator/health", "/public/**").permitAll()
-                        .anyRequest().denyAll())
+                .securityMatcher("/api/auth/**", "/actuator/health", "/public/**")
+                .authorizeHttpRequests(request -> request.anyRequest().permitAll())
                 .build();
     }
 
