@@ -57,6 +57,7 @@ public class Transaction {
     /**
      * 결제 수단 (예: APP_CARD)
      */
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentMethod method;
 
