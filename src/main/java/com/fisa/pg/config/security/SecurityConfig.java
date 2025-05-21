@@ -36,7 +36,7 @@ public class SecurityConfig {
     public SecurityFilterChain appCardFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers(HttpMethod.POST, "/payments/*/authorize").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/payments/authorize").permitAll()
                         .anyRequest().denyAll())
                 .build();
     }
