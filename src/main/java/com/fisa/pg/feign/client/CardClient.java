@@ -22,7 +22,7 @@ public interface CardClient {
      * @param request 결제 승인 요청 정보
      * @return 결제 승인 응답 정보
      */
-    @PostMapping("/api/v1/card/payment/authorization")
+    @PostMapping("/authorization")
     BaseResponse<CardPaymentApprovalResponseDto> requestAuth(
             @RequestBody CardPaymentApprovalRequestDto request
     );
