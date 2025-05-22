@@ -21,7 +21,7 @@ public class CardPaymentApprovalResponseDto {
     /**
      * 트랜잭션 ID
      */
-    private String transactionId;
+    private String txnId;
 
     /**
      * 결제 상태
