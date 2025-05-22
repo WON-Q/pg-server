@@ -25,8 +25,8 @@ public interface TransactionLogRepository extends JpaRepository<TransactionLog, 
         AND (:methods IS NULL OR t.transaction.method IN :methods)
         AND (
             :searchTerm IS NULL OR :searchTerm = '' OR 
-            t.transaction.transactionId LIKE %:searchTerm% OR 
-            t.message LIKE %:searchTerm%
+            t.transaction.transactionId LIKE CONCAT('%', :searchTerm, '%') OR 
+            t.message LIKE CONCAT('%', :searchTerm, '%')
         )
         ORDER BY t.createdAt DESC
         """)
