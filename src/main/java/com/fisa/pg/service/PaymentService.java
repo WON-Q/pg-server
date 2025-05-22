@@ -279,13 +279,6 @@ public class PaymentService {
         );
         transactionRepository.save(transaction);
 
-        // 9. 앱카드 서버에 결제 결과 전송 (38단계)
-        AppCardPaymentResponseDto appCardResult = AppCardPaymentResponseDto.builder()
-            .txnId(transactionId)
-            .paymentStatus(payment.getPaymentStatus())
-            .build();
-
-        appCardClient.sendPaymentResult(appCardResult);
         log.info("앱카드 서버에 결제 결과 전송 완료: txnId={}, status={}",
             transactionId, payment.getPaymentStatus());
 
