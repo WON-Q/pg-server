@@ -282,8 +282,6 @@ public class PaymentService {
         log.info("앱카드 서버에 결제 결과 전송 완료: txnId={}, status={}",
             transactionId, payment.getPaymentStatus());
 
-        // Todo: 9. 외부 시스템(webhook url)에 결제 결과 전송 -> AOP로 구현
-
         return approvalResponse;
     }
 
