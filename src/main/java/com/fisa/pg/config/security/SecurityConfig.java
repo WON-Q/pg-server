@@ -76,8 +76,10 @@ public class SecurityConfig {
     @Order(5) // 인증이 필요 없는 기본 요청용 필터 체인
     public SecurityFilterChain defaultFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
-                .securityMatcher("/api/auth/**", "/actuator/health", "/test/hash", "/public/**")
-                .authorizeHttpRequests(request -> request.anyRequest().permitAll())
+                .securityMatcher("/api/auth/**", "/actuator/health", "/test/hash", "/public/**", "/payment/ui/**")
+                .authorizeHttpRequests(request -> request
+                        .anyRequest().permitAll()
+                )
                 .build();
     }
 
