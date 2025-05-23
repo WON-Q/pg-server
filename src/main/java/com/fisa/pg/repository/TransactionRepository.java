@@ -17,4 +17,12 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
      * @return 조건에 맞는 트랜잭션 (없을 경우 빈 Optional)
      */
     Optional<Transaction> findByPaymentAndTransactionStatus(Payment payment, TransactionStatus status);
+
+    /**
+     * 특정 결제(Payment)와 관련된 트랜잭션을 조회하는 메서드
+     *
+     * @param payment 조회할 결제 객체
+     * @return 조건에 맞는 트랜잭션 (없을 경우 빈 Optional)
+     */
+    Optional<Transaction> findByPayment(Payment payment);
 }
