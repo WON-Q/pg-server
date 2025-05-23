@@ -4,6 +4,7 @@ import com.fisa.pg.entity.transaction.Transaction;
 import com.fisa.pg.entity.user.Merchant;
 import com.fisa.pg.entity.billing.Billing;
 import com.fisa.pg.entity.refund.Refund;
+import com.fisa.pg.entity.card.UserCard;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -102,6 +103,14 @@ public class Payment {
     private List<Refund> refunds = new ArrayList<>();
 
     /**
+     * 사용자 카드 정보 (N:1 관계)
+     * 여러 결제가 동일한 카드를 사용할 수 있음
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_card_id")
+    private UserCard userCard;
+
+    /**
      * 결제 상태를 업데이트하는 메서드
      *
      * @param newStatus 새로운 결제 상태
@@ -119,6 +128,15 @@ public class Payment {
      */
     public void updatePaymentMethod(String method) {
         this.paymentMethod = PaymentMethod.valueOf(method);
+    }
+
+    /**
+     * 사용자 카드 정보를 업데이트하는 메서드
+     *
+     * @param userCard 사용자 카드 정보
+     */
+    public void updateUserCard(UserCard userCard) {
+        this.userCard = userCard;
     }
 
     public boolean isSucceeded() {

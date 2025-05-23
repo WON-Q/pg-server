@@ -255,6 +255,10 @@ public class PaymentService {
         UserCard userCard = UserCard.from(binInfo, cardNumber);
         userCardRepository.save(userCard);
 
+        // 5-2. 결제 정보에 사용자 카드 정보 업데이트
+        payment.updateUserCard(userCard);
+        paymentRepository.save(payment);
+
         log.info("사용자 카드 정보 저장 완료: 카드 타입={}", binInfo.getCardType());
 
         // 6. 카드사 결제 승인 요청 생성
