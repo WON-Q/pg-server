@@ -41,11 +41,21 @@ public enum PaymentStatus {
     /**
      * 결제가 취소된 상태
      */
-    CANCELED,
+    CANCELLED,
 
     /**
      * 결제가 일정 시간 동안 진행되지 않아 만료된 상태 (ex. 앱카드 인증 세션이 만료된 경우)
      */
-    EXPIRED
+    EXPIRED,
+
+    /**
+     * 결제 환불이 취소된 상태
+     */
+    REFUND_FAILED
+
+
+
+
+
 
 }

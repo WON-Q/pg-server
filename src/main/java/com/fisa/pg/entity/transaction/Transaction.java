@@ -2,6 +2,7 @@ package com.fisa.pg.entity.transaction;
 
 import com.fisa.pg.entity.payment.Payment;
 import com.fisa.pg.entity.payment.PaymentMethod;
+import com.fisa.pg.entity.payment.PaymentStatus;
 import com.fisa.pg.entity.user.Merchant;
 import com.fisa.pg.entity.refund.Refund;
 import jakarta.persistence.*;
@@ -139,5 +140,11 @@ public class Transaction {
     public void updateTransactionStatus(TransactionStatus status) {
         this.transactionStatus = status;
     }
+
+
+    public String txnId() {
+        return this.transactionId;
+    }
+
 
 }

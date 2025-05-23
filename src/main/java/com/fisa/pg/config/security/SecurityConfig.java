@@ -82,15 +82,17 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Order(6) // 그 외 모든 요청에 대한 필터 체인
+    @Order(6)
     public SecurityFilterChain fallbackFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
                 .authorizeHttpRequests(request -> request
+                        .requestMatchers("/api/payments/refund").permitAll()
                         .requestMatchers("/api/merchant/**").hasRole("MERCHANT")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {

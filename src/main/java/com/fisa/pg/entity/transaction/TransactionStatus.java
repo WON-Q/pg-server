@@ -31,7 +31,7 @@ public enum TransactionStatus {
     /**
      * 사용자가 결제를 취소하거나 승인된 결제를 취소한 상태
      */
-    CANCELED,
+    CANCELLED,
 
     /**
      * 결제 요청이 처리되지 못하거나 외부 시스템(카드사 등)에서 실패한 상태
@@ -41,6 +41,11 @@ public enum TransactionStatus {
     /**
      * 앱카드 인증이 실패한 상태 (예: 인증 거부, 생체 인증 실패 등)
      */
-    AUTH_FAILED
+    AUTH_FAILED,
+
+    /**
+     * 결제 환불이 취소된 상태
+     */
+    REFUND_FAILED
 
 }
