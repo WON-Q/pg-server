@@ -17,9 +17,9 @@ import lombok.NoArgsConstructor;
 public class LoginRequestDto {
 
     /**
-     * 사용자 아이디
+     * 사용자 이메일
      */
-    private String id;
+    private String email;
 
     /**
      * 사용자 비밀번호

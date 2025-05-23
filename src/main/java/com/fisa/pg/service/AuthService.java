@@ -19,11 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AuthService {
 
+    private final PasswordEncoder passwordEncoder;
+
     private final MerchantRepository merchantRepository;
 
     private final AdminRepository adminRepository;
-
-    private final PasswordEncoder passwordEncoder;
 
     private final JwtUtil jwtUtil;
 
@@ -35,12 +35,19 @@ public class AuthService {
      */
     @Transactional
     public LoginResponseDto handleMerchantLogin(LoginRequestDto request) {
-        Merchant merchant = merchantRepository.findByEmail(request.getId())
+        Merchant merchant = merchantRepository.findByEmail(request.getEmail())
                 .orElseThrow(InvalidCredentialsException::new);
+
+        System.out.println("📌 사용자 입력 비번: " + request.getPassword());
+        System.out.println("📌 DB 저장된 비번: " + merchant.getPassword());
+        System.out.println("📌 매칭 결과: " + passwordEncoder.matches(request.getPassword(), merchant.getPassword()));
+
 
         if (!merchant.isActive()) {
             throw new InvalidCredentialsException();
         }
+
+
 
         if (!passwordEncoder.matches(request.getPassword(), merchant.getPassword())) {
             throw new InvalidCredentialsException();
@@ -66,7 +73,10 @@ public class AuthService {
      */
     @Transactional
     public LoginResponseDto handleAdminLogin(LoginRequestDto request) {
-        Admin admin = adminRepository.findByEmail(request.getId())
+        System.out.println("📨 요청 받은 이메일: '" + request.getEmail() + "'");
+        System.out.println("🔍 DB 검색 결과: " + merchantRepository.findByEmail(request.getEmail()));
+
+        Admin admin = adminRepository.findByEmail(request.getEmail())
                 .orElseThrow(InvalidCredentialsException::new);
 
         if (!admin.isActive()) {

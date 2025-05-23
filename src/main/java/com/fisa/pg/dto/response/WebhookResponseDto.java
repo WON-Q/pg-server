@@ -51,7 +51,7 @@ public class WebhookResponseDto {
                 .merchantId(merchant.getId())
                 .merchantName(merchant.getName())
                 .webhookUrl(merchant.getWebhookUrl())
-                .isActive(merchant.isWebhookEnabled())
+                .isActive(merchant.getIsWebhookEnabled())
                 .createdAt(merchant.getCreatedAt().toString())
                 .build();
     }
