@@ -38,7 +38,7 @@ public class CreateWebhookResponseDto {
     public static CreateWebhookResponseDto from(Merchant merchant) {
         return CreateWebhookResponseDto.builder()
                 .url(merchant.getWebhookUrl())
-                .enabled(merchant.isWebhookEnabled())
+                .enabled(merchant.getIsWebhookEnabled())
                 .secretKey(merchant.getWebhookSecretKey())
                 .build();
     }

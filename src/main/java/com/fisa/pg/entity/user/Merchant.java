@@ -94,8 +94,8 @@ public class Merchant {
      * 웹훅 활성화 여부
      * true: 활성화, false: 비활성화
      */
-    @Column(name = "webhook_enabled", nullable = true)
-    private boolean isWebhookEnabled;
+    @Column(name = "is_webhook_enabled")
+    private Boolean isWebhookEnabled;
 
     /**
      * 웹훅 등록 시각

@@ -20,12 +20,14 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<BaseResponse<LoginResponseDto>> loginMerchant(@RequestBody LoginRequestDto request) {
+        System.out.println("📥 [컨트롤러 진입] 로그인 요청 받음: " + request.getEmail());
         LoginResponseDto data = authService.handleMerchantLogin(request);
         return ResponseEntity.ok(BaseResponse.onSuccess("로그인에 성공하였습니다.", data));
     }
 
     @PostMapping("/admin/login")
     public ResponseEntity<BaseResponse<LoginResponseDto>> loginAdmin(@RequestBody LoginRequestDto request) {
+        System.out.println("📥 [컨트롤러 진입] 로그인 요청 받음: " + request.getEmail());
         LoginResponseDto data = authService.handleAdminLogin(request);
         return ResponseEntity.ok(BaseResponse.onSuccess("로그인에 성공하였습니다.", data));
     }
