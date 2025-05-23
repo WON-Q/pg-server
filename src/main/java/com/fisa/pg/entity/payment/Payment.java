@@ -121,4 +121,8 @@ public class Payment {
         this.paymentMethod = PaymentMethod.valueOf(method);
     }
 
+    public boolean isSucceeded() {
+        return this.paymentStatus == PaymentStatus.SUCCEEDED;
+    }
+
 }
