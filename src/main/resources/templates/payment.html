@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>우리 결제 서비스</title>
     <style>
         /* Reset CSS */
@@ -204,45 +204,6 @@
         }
     </style>
 </head>
-<script>
-  // 폼 제출 확인용 스크립트
-  document.getElementById("cardPaymentForm").addEventListener("submit", function(event) {
-    console.log("폼 제출 시작: paymentId =", document.querySelector('input[name="paymentId"]').value);
-
-    // 폼 상태 표시
-    const submitButton = this.querySelector('button[type="submit"]');
-    submitButton.innerHTML = '<div class="button-content"><div class="logo-icon">우</div><div class="payment-text"><span class="woori-logo-text">처리 중...</span></div></div>';
-
-    // 폼 제출 진행 확인을 위해 fetch API 사용
-    event.preventDefault();
-
-    fetch(this.action, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: new URLSearchParams(new FormData(this))
-    })
-    .then(response => {
-      console.log("서버 응답 상태:", response.status);
-      return response.json();
-    })
-    .then(data => {
-      console.log("서버 응답 데이터:", data);
-      alert("결제 요청이 처리되었습니다: " + JSON.stringify(data));
-
-      // 버튼 상태 복원
-      submitButton.innerHTML = '<div class="button-content"><div class="logo-icon">우</div><div class="payment-text"><span class="woori-logo-text">우리카드로 결제하기</span><span class="payment-desc">우리카드 앱카드 간편결제</span></div></div><span class="button-arrow">›</span>';
-    })
-    .catch(error => {
-      console.error("오류 발생:", error);
-      alert("결제 처리 중 오류가 발생했습니다: " + error);
-
-      // 버튼 상태 복원
-      submitButton.innerHTML = '<div class="button-content"><div class="logo-icon">우</div><div class="payment-text"><span class="woori-logo-text">우리카드로 결제하기</span><span class="payment-desc">우리카드 앱카드 간편결제</span></div></div><span class="button-arrow">›</span>';
-    });
-  });
-</script>
 <body>
 <!-- Close Button -->
 <button class="close-btn">✕</button>
@@ -256,16 +217,23 @@
 <!-- Payment Container with Multiple Options -->
 <div class="payment-container">
     <div class="payment-options">
-        <button class="payment-button woori-pay-button">
-            <div class="button-content">
-                <div class="logo-icon">우</div>
-                <div class="payment-text">
-                    <span class="woori-logo-text">우리Pay로 결제하기</span>
-                    <span class="payment-desc">간편하고 빠른 우리페이 결제</span>
+        <form
+                id="payPaymentForm"
+                th:action="@{/payment/ui/wooricard/process}"
+                method="post"
+        >
+            <input type="hidden" name="paymentId" th:value="${paymentId}"/>
+            <button type="submit" class="payment-button woori-pay-button">
+                <div class="button-content">
+                    <div class="logo-icon">우</div>
+                    <div class="payment-text">
+                        <span class="woori-logo-text">우리Pay로 결제하기</span>
+                        <span class="payment-desc">간편하고 빠른 우리페이 결제</span>
+                    </div>
                 </div>
-            </div>
-            <span class="button-arrow">›</span>
-        </button>
+                <span class="button-arrow">›</span>
+            </button>
+        </form>
 
         <button class="payment-button woori-bank-button">
             <div class="button-content">
@@ -278,23 +246,16 @@
             <span class="button-arrow">›</span>
         </button>
 
-        <form
-                id="cardPaymentForm"
-                th:action="@{/payment/ui/wooricard/process}"
-                method="post"
-        >
-            <input type="hidden" name="paymentId" th:value="${paymentId}" />
-            <button type="submit" class="payment-button woori-card-button">
-                <div class="button-content">
-                    <div class="logo-icon">우</div>
-                    <div class="payment-text">
-                        <span class="woori-logo-text">우리카드로 결제하기</span>
-                        <span class="payment-desc">우리카드 앱카드 간편결제</span>
-                    </div>
+        <button class="payment-button woori-card-button">
+            <div class="button-content">
+                <div class="logo-icon">우</div>
+                <div class="payment-text">
+                    <span class="woori-logo-text">우리카드로 결제하기</span>
+                    <span class="payment-desc">우리카드 앱카드 간편결제</span>
                 </div>
-                <span class="button-arrow">›</span>
-            </button>
-        </form>
+            </div>
+            <span class="button-arrow">›</span>
+        </button>
     </div>
 
     <div class="other-methods">
@@ -313,6 +274,45 @@
 </div>
 
 <script th:inline="javascript">
+    // 우리Pay 폼 제출 처리
+    document.getElementById("payPaymentForm").addEventListener("submit", function(event) {
+        console.log("우리Pay 폼 제출 시작: paymentId =", document.querySelector('input[name="paymentId"]').value);
+
+        // 폼 상태 표시
+        const submitButton = this.querySelector('button[type="submit"]');
+        const originalContent = submitButton.innerHTML;
+        submitButton.innerHTML = '<div class="button-content"><div class="logo-icon">우</div><div class="payment-text"><span class="woori-logo-text">처리 중...</span></div></div>';
+
+        // 폼 제출 진행 확인을 위해 fetch API 사용
+        event.preventDefault();
+
+        fetch(this.action, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: new URLSearchParams(new FormData(this))
+        })
+        .then(response => {
+            console.log("서버 응답 상태:", response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log("서버 응답 데이터:", data);
+            alert("우리Pay 결제 요청이 처리되었습니다: " + JSON.stringify(data));
+
+            // 버튼 상태 복원
+            submitButton.innerHTML = originalContent;
+        })
+        .catch(error => {
+            console.error("오류 발생:", error);
+            alert("우리Pay 결제 처리 중 오류가 발생했습니다: " + error);
+
+            // 버튼 상태 복원
+            submitButton.innerHTML = originalContent;
+        });
+    });
+
     // Close button
     document
       .querySelector(".close-btn")
@@ -321,17 +321,18 @@
         alert("결제 취소됨");
       });
 
-    // Payment buttons
-    document
-      .querySelector(".woori-pay-button")
-      .addEventListener("click", function () {
-        alert("우리Pay 결제를 진행합니다");
-      });
-
+    // 우리뱅크 버튼 처리
     document
       .querySelector(".woori-bank-button")
       .addEventListener("click", function () {
         alert("우리뱅크 결제를 준비 중입니다");
+      });
+
+    // 우리카드 버튼 처리 (alert로 변경)
+    document
+      .querySelector(".woori-card-button")
+      .addEventListener("click", function () {
+        alert("우리카드 결제를 준비 중입니다");
       });
 
     // Other methods buttons
