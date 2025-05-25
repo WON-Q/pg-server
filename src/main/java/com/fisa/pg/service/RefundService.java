@@ -54,34 +54,45 @@ public class RefundService {
             throw new IllegalStateException("SUCCEEDED 상태의 결제만 환불할 수 있습니다.");
         }
 
+        // 3. 환불 정보 생성 (초기 상태: REQUESTED)
+        Refund refund = Refund.builder()
+                .payment(payment)
+                .transaction(transaction)
+                .refundAmount(payment.getAmount())
+                .requestedAt(LocalDateTime.now())
+                .refundStatus(RefundStatus.REQUESTED)  // 초기 상태는 REQUESTED로 설정
+                .build();
 
-        // 3. 카드사에 환불 요청
+        refundRepository.save(refund);
+
+
+        // 4. 카드사에 환불 요청
         RefundRequestToCardDto cardRequest = RefundRequestToCardDto.builder()
                 .txnId(transaction.txnId())
                 .build();
 
         RefundResponseFromCardDto cardResponse = cardClient.requestRefundToCard(cardRequest);
 
-        // 4. 결과에 따라 상태 업데이트
+        // 5. 결과에 따라 상태 업데이트
         if (cardResponse.getPaymentStatus() == PaymentStatus.CANCELLED) {
+            // 환불 성공 시
             payment.updatePaymentStatus(PaymentStatus.CANCELLED);
             transaction.updateTransactionStatus(TransactionStatus.CANCELLED);
+
+            // 환불 엔티티 상태를 COMPLETED로 변경하고 환불 완료 시간 설정
+            refund.updateRefundStatus(RefundStatus.COMPLETED, LocalDateTime.now());
         } else {
+            // 환불 실패 시
             transaction.updateTransactionStatus(TransactionStatus.REFUND_FAILED);
+
+            // 환불 엔티티 상태를 FAILED로 변경하고 실패 시간 설정
+            refund.updateRefundStatus(RefundStatus.FAILED, LocalDateTime.now());
         }
 
-        // 4-1. 환불 정보 생성 및 저장
-        Refund refund = Refund.builder()
-                .payment(payment)
-                .transaction(transaction)
-                .refundAmount(payment.getAmount())
-                .requestedAt(LocalDateTime.now())
-                .refundStatus(RefundStatus.COMPLETED)
-                .build();
-
+        // 6. 변경된 환불 정보 저장
         refundRepository.save(refund);
 
-        // 5. 최종 응답 생성
+        // 7. 최종 응답 생성
         return RefundResponseToOneQOrderDto.builder()
                 .paymentId(payment.getId())
                 .txnId(transaction.txnId())
