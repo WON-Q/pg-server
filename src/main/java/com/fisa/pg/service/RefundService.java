@@ -4,16 +4,21 @@ import com.fisa.pg.dto.request.RefundRequestFromOneQOrderDto;
 import com.fisa.pg.dto.response.RefundResponseToOneQOrderDto;
 import com.fisa.pg.entity.payment.Payment;
 import com.fisa.pg.entity.payment.PaymentStatus;
+import com.fisa.pg.entity.refund.Refund;
+import com.fisa.pg.entity.refund.RefundStatus;
 import com.fisa.pg.entity.transaction.Transaction;
 import com.fisa.pg.entity.transaction.TransactionStatus;
 import com.fisa.pg.feign.client.CardClient;
 import com.fisa.pg.feign.dto.card.request.RefundRequestToCardDto;
 import com.fisa.pg.feign.dto.card.response.RefundResponseFromCardDto;
 import com.fisa.pg.repository.PaymentRepository;
+import com.fisa.pg.repository.RefundRepository;
 import com.fisa.pg.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 /**
  * 환불 요청을 처리하는 서비스 클래스입니다.
@@ -25,6 +30,7 @@ public class RefundService {
     private final PaymentRepository paymentRepository;
     private final TransactionRepository transactionRepository;
     private final CardClient cardClient;
+    private final RefundRepository refundRepository;
 
     /**
      * 원큐오더 서버로부터의 환불 요청을 처리하고 카드사에 환불 요청을 위임한 후,
@@ -48,6 +54,7 @@ public class RefundService {
             throw new IllegalStateException("SUCCEEDED 상태의 결제만 환불할 수 있습니다.");
         }
 
+
         // 3. 카드사에 환불 요청
         RefundRequestToCardDto cardRequest = RefundRequestToCardDto.builder()
                 .txnId(transaction.txnId())
@@ -62,6 +69,17 @@ public class RefundService {
         } else {
             transaction.updateTransactionStatus(TransactionStatus.REFUND_FAILED);
         }
+
+        // 4-1. 환불 정보 생성 및 저장
+        Refund refund = Refund.builder()
+                .payment(payment)
+                .transaction(transaction)
+                .refundAmount(payment.getAmount())
+                .requestedAt(LocalDateTime.now())
+                .refundStatus(RefundStatus.COMPLETED)
+                .build();
+
+        refundRepository.save(refund);
 
         // 5. 최종 응답 생성
         return RefundResponseToOneQOrderDto.builder()
