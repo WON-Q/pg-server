@@ -60,6 +60,12 @@ public class Refund {
     private LocalDateTime refundedAt;
 
     /**
+     * 환불 실패 시각
+     */
+    @Column(name = "failed_at", nullable = true)
+    private LocalDateTime failedAt;
+
+    /**
      * 환불 상태
      */
     @Enumerated(EnumType.STRING)
