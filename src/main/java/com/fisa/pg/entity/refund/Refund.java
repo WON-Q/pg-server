@@ -72,4 +72,15 @@ public class Refund {
     @Column(columnDefinition = "TEXT", nullable = true)
     private String reason;
 
+    /**
+     * 환불 상태를 업데이트하는 메서드
+     *
+     * @param newStatus 새로운 환불 상태
+     * @param completedAt 환불 완료 시각 (완료인 경우에만 값 설정)
+     */
+    public void updateRefundStatus(RefundStatus newStatus, LocalDateTime completedAt) {
+        this.refundStatus = newStatus;
+        this.refundedAt = completedAt;
+    }
+
 }
