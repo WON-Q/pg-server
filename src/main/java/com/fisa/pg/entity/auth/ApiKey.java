@@ -31,7 +31,7 @@ public class ApiKey {
      * 키 소유 가맹점 (Merchant 1 : ApiKey N)
      * 한 가맹점은 여러 API 키를 소유할 수 있음
      */
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "merchant_id", nullable = false)
     private Merchant merchant;
 
