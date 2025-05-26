@@ -8,4 +8,5 @@ package com.fisa.pg.entity.payment;
  */
 public enum PaymentMethod {
     APP_CARD,
+    WOORI_APP_CARD,
 }
