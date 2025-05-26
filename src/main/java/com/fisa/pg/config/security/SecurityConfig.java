@@ -88,7 +88,7 @@ public class SecurityConfig {
     public SecurityFilterChain defaultFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
                 .cors(cors -> {}) // CORS 설정 활성화
-                .securityMatcher("/api/auth/**", "/actuator/health", "/test/hash", "/public/**", "/method","/payment/ui/**","/favicon.ico")
+                .securityMatcher("/api/auth/**", "/actuator/health", "/test/hash", "/public/**", "/method","/payment/ui/**","/favicon.ico", "/api/payments/verify")
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(HttpMethod.OPTIONS, "/method").permitAll()
                         .requestMatchers("/method").permitAll()
