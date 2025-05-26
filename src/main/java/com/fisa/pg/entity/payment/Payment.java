@@ -75,7 +75,7 @@ public class Payment {
      * 결제 수단
      */
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private PaymentMethod paymentMethod;
 
     /**
