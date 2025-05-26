@@ -34,6 +34,11 @@ public class PaymentTokenAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         try {
+
+            log.info("💡 PaymentTokenAuthenticationFilter 시작됨");
+            String requestPath = request.getRequestURI();
+            log.info("[AUTH FILTER] 요청 URI: {}", requestPath); // 요청 경로 출력
+
             // 요청 헤더에서 Basic 토큰 추출
             String[] credentials = extractCredentials(request);
 
