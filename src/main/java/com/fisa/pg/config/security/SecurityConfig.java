@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -14,6 +15,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -43,8 +49,13 @@ public class SecurityConfig {
     @Order(2) // 주문 생성 - Payment Token 관련 필터 체인
     public SecurityFilterChain paymentTokenFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
-                .securityMatcher("/api/payment/**", "/api/order/**")
-                .authorizeHttpRequests(request -> request.anyRequest().authenticated())
+                .cors(cors -> {}) // CORS 허용
+                .securityMatcher("/api/payment/**", "/api/order/**", "/prepare")
+                .authorizeHttpRequests(request -> request
+                        .requestMatchers(HttpMethod.OPTIONS, "/prepare").permitAll()
+                        .requestMatchers("/prepare").authenticated()
+                        .requestMatchers("/method").permitAll()
+                        .anyRequest().authenticated())
                 .addFilterBefore(paymentTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
@@ -76,8 +87,13 @@ public class SecurityConfig {
     @Order(5) // 인증이 필요 없는 기본 요청용 필터 체인
     public SecurityFilterChain defaultFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
-                .securityMatcher("/api/auth/**", "/actuator/health", "/test/hash", "/public/**")
-                .authorizeHttpRequests(request -> request.anyRequest().permitAll())
+                .cors(cors -> {}) // CORS 설정 활성화
+                .securityMatcher("/api/auth/**", "/actuator/health", "/test/hash", "/public/**", "/method","/payment/ui/**","/favicon.ico", "/api/payments/verify")
+                .authorizeHttpRequests(request -> request
+                        .requestMatchers(HttpMethod.OPTIONS, "/method").permitAll()
+                        .requestMatchers("/method").permitAll()
+                        .anyRequest().permitAll()
+                )
                 .build();
     }
 
@@ -93,6 +109,18 @@ public class SecurityConfig {
                 .build();
     }
 
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // 정확히 명시
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {

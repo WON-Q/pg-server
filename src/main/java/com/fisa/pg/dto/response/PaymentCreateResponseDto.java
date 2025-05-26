@@ -58,7 +58,7 @@ public class PaymentCreateResponseDto {
                 .merchantId(merchant.getId())
                 .paymentStatus(payment.getPaymentStatus())
                 .amount(payment.getAmount())
-                .callbackUrl("/api/payment/ui/" + payment.getId())
+                .callbackUrl("/payment")
                 .build();
     }
 

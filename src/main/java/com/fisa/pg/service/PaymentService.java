@@ -1,5 +1,6 @@
 package com.fisa.pg.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fisa.pg.dto.request.AppCardPaymentRequestDto;
 import com.fisa.pg.dto.request.PaymentCreateRequestDto;
 import com.fisa.pg.dto.request.PaymentMethodUpdateRequestDto;
@@ -11,6 +12,7 @@ import com.fisa.pg.dto.response.PaymentVerifyResponseDto;
 import com.fisa.pg.entity.card.BinInfo;
 import com.fisa.pg.entity.card.UserCard;
 import com.fisa.pg.entity.payment.Payment;
+import com.fisa.pg.entity.payment.PaymentMethod;
 import com.fisa.pg.entity.payment.PaymentStatus;
 import com.fisa.pg.entity.transaction.Transaction;
 import com.fisa.pg.entity.transaction.TransactionStatus;
@@ -36,6 +38,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -56,6 +60,8 @@ public class PaymentService {
 
     private final UserCardRepository userCardRepository;
 
+    private static final SecureRandom random = new SecureRandom();
+
     /**
      * 결제 생성 요청 처리 메서드
      * <p>
@@ -67,6 +73,9 @@ public class PaymentService {
      */
     @Transactional
     public PaymentCreateResponseDto createPayment(PaymentCreateRequestDto request, Merchant merchant) {
+
+        log.info("요청 받은 currency = {}", request.getCurrency());
+
         // 1. 중복 결제 확인
         paymentRepository.findByOrderIdAndMerchant(request.getOrderId(), merchant)
                 .ifPresent(p -> {
@@ -78,16 +87,23 @@ public class PaymentService {
                 .orderId(request.getOrderId())
                 .amount(request.getAmount())
                 .merchant(merchant)
+                .currency(request.getCurrency())
+                .paymentMethod(PaymentMethod.APP_CARD)
                 .paymentStatus(PaymentStatus.CREATED)
                 .build();
 
         paymentRepository.save(payment);
+        String txnId = "txnId" + String.format("%010d", random.nextLong(1_000_000_000L));
 
         // 3. Transaction 생성
         Transaction transaction = Transaction.builder()
+                .transactionId(txnId)
                 .payment(payment)
                 .merchant(merchant)
                 .amount(request.getAmount())
+                .method(PaymentMethod.APP_CARD)
+                .requestedAt(LocalDateTime.now())
+                .currency(request.getCurrency())
                 .transactionStatus(TransactionStatus.PENDING)
                 .build();
 
@@ -167,10 +183,11 @@ public class PaymentService {
     public void requestAppCardAuth(AppCardAuthRequestDto request) {
         log.info("앱카드 인증 요청 시작: txnId={}, amount={}", request.getTxnId(), request.getAmount());
 
+
         try {
             // 앱카드 서버와 통신하여 인증 딥링크 요청 (16단계)
             AppCardAuthResponseDto response = appCardClient.requestAuth(request);
-
+            log.info("딥링크 ={}", response.getDeepLink());
             // 응답 검증 및 딥링크 추출 (19단계)
             String deepLink = response.getDeepLink();
             log.info("앱카드 인증 딥링크 수신 완료: txnId={}, deepLink={}", request.getTxnId(), deepLink);

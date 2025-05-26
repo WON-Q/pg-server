@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 자세한 내용은 프로젝트 내 {@code docs/payment-flow.md} 문서를 참조해 주세요.
  */
 @RestController
-@RequestMapping("/api/v1/payments")
+@RequestMapping("/api/payments")
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentVerificationController {
