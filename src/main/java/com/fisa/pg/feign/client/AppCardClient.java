@@ -22,7 +22,7 @@ public interface AppCardClient {
      * @param request 결제 인증 요청 정보
      * @return 앱카드 인증 응답 (딥링크 포함)
      */
-    @PostMapping("appCard/authentication")
+    @PostMapping("/authentication")
     AppCardAuthResponseDto requestAuth(
             @RequestBody AppCardAuthRequestDto request
     );
