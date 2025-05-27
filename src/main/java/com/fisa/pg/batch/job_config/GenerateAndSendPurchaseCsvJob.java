@@ -10,16 +10,18 @@ import jakarta.persistence.EntityManagerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import java.io.File;
 import java.time.LocalDate;
@@ -29,41 +31,37 @@ import java.util.List;
 @EnableBatchProcessing
 public class GenerateAndSendPurchaseCsvJob {
 
-    @Autowired
-    private JobBuilderFactory jobBuilderFactory;
+    private final EntityManagerFactory entityManagerFactory;
+    private final PaymentRepository paymentRepository;
+    private final CsvGenerator csvGenerator;
+    private final SftpUploader sftpUploader;
 
-    @Autowired
-    private StepBuilderFactory stepBuilderFactory;
-
-    @Autowired
-    @Qualifier("dataEntityManager")
-    private EntityManagerFactory entityManagerFactory;
-
-    @Autowired
-    private PaymentRepository paymentRepository;
-
-    @Autowired
-    private CsvGenerator csvGenerator;
-
-    @Autowired
-    private SftpUploader sftpUploader;
+    public GenerateAndSendPurchaseCsvJob(EntityManagerFactory entityManagerFactory,
+                                         PaymentRepository paymentRepository,
+                                         CsvGenerator csvGenerator,
+                                         SftpUploader sftpUploader) {
+        this.entityManagerFactory = entityManagerFactory;
+        this.paymentRepository = paymentRepository;
+        this.csvGenerator = csvGenerator;
+        this.sftpUploader = sftpUploader;
+    }
 
     @Bean
-    public Job generateAndSendPurchaseCsvJob(Step merchantCsvStep) {
-        return jobBuilderFactory.get("GenerateAndSendPurchaseCsvJob")
+    public Job generateAndSendPurchaseCsvJob(JobRepository jobRepository, Step merchantCsvStep) {
+        return new JobBuilder("GenerateAndSendPurchaseCsvJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .start(merchantCsvStep)
                 .build();
     }
 
     @Bean
-    public Step merchantCsvStep(
-            ItemReader<Merchant> merchantReader,
-            ItemProcessor<Merchant, Merchant> merchantProcessor,
-            ItemWriter<Merchant> merchantWriter
-    ) {
-        return stepBuilderFactory.get("GenerateCsvAndSendSftpStep")
-                .<Merchant, Merchant>chunk(10)
+    public Step merchantCsvStep(JobRepository jobRepository,
+                                PlatformTransactionManager transactionManager,
+                                ItemReader<Merchant> merchantReader,
+                                ItemProcessor<Merchant, Merchant> merchantProcessor,
+                                ItemWriter<Merchant> merchantWriter) {
+        return new StepBuilder("GenerateCsvAndSendSftpStep", jobRepository)
+                .<Merchant, Merchant>chunk(10, transactionManager)
                 .reader(merchantReader)
                 .processor(merchantProcessor)
                 .writer(merchantWriter)
@@ -89,7 +87,7 @@ public class GenerateAndSendPurchaseCsvJob {
     public ItemWriter<Merchant> merchantWriter() {
         return merchants -> {
             for (Merchant merchant : merchants) {
-                List<Payment> payments = paymentRepository.findByMerchantAndPaymentStatusAndCreatedAtBetween(
+                List<Payment> payments = paymentRepository.findByMerchantAndPaymentStatusAndApprovedAtBetween(
                         merchant,
                         PaymentStatus.SUCCEEDED,
                         LocalDate.now().atStartOfDay(),
