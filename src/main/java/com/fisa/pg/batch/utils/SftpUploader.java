@@ -2,18 +2,13 @@ package com.fisa.pg.batch.utils;
 
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.sftp.SFTPClient;
-import net.schmizz.sshj.transport.verification.HostKeyVerifier;
+import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
+import net.schmizz.sshj.xfer.LocalFileFilter;
 import net.schmizz.sshj.xfer.LocalSourceFile;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.PublicKey;
-import java.util.Collections;
-import java.util.List;
+import java.io.*;
 
 @Component
 public class SftpUploader {
@@ -40,25 +35,14 @@ public class SftpUploader {
 
         try (SSHClient ssh = new SSHClient()) {
 
-            ssh.addHostKeyVerifier(new HostKeyVerifier() {
-                @Override
-                public boolean verify(String hostname, int port, PublicKey key) {
-                    return true; // 실 서비스에서는 known_hosts 기반 검증을 해야 함
-                }
-
-                @Override
-                public List<String> findExistingAlgorithms(String hostname, int port) {
-                    // 안전하게 비워진 리스트 반환
-                    return Collections.emptyList();
-                }
-            });
+            // 모든 호스트 키를 허용하는 검증기 (운영 시엔 보안상 적절한 HostKeyVerifier로 대체 필요)
+            ssh.addHostKeyVerifier(new PromiscuousVerifier());
 
             ssh.connect(sftpHost, sftpPort);
             ssh.authPassword(sftpUsername, sftpPassword);
 
             try (SFTPClient sftp = ssh.newSFTPClient()) {
-
-                LocalSourceFile sourceFile = new LocalSourceFile() {
+                sftp.put(new LocalSourceFile() {
                     @Override
                     public String getName() {
                         return file.getName();
@@ -70,17 +54,49 @@ public class SftpUploader {
                     }
 
                     @Override
-                    public InputStream getInputStream() throws IOException {
-                        return new FileInputStream(file); // 이 시점에 스트림 열기
+                    public InputStream getInputStream() {
+                        try {
+                            return new FileInputStream(file);
+                        } catch (IOException e) {
+                            throw new UncheckedIOException("파일 스트림 생성 실패", e);
+                        }
                     }
 
                     @Override
                     public boolean isFile() {
                         return true;
                     }
-                };
 
-                sftp.put(sourceFile, sftpRemoteDir + "/");
+                    @Override
+                    public boolean isDirectory() {
+                        return false;
+                    }
+
+                    @Override
+                    public Iterable<? extends LocalSourceFile> getChildren(LocalFileFilter localFileFilter) throws IOException {
+                        return null;
+                    }
+
+                    @Override
+                    public boolean providesAtimeMtime() {
+                        return false;
+                    }
+
+                    @Override
+                    public long getLastAccessTime() throws IOException {
+                        return 0;
+                    }
+
+                    @Override
+                    public long getLastModifiedTime() throws IOException {
+                        return 0;
+                    }
+
+                    @Override
+                    public int getPermissions() {
+                        return 0644; // rw-r--r--
+                    }
+                }, sftpRemoteDir + "/");
             }
 
         } catch (IOException e) {
