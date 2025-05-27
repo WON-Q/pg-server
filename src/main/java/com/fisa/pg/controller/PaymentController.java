@@ -5,6 +5,7 @@ import com.fisa.pg.dto.request.PaymentCreateRequestDto;
 import com.fisa.pg.dto.request.PaymentMethodUpdateRequestDto;
 import com.fisa.pg.dto.response.BaseResponse;
 import com.fisa.pg.dto.response.PaymentCreateResponseDto;
+import com.fisa.pg.dto.response.PaymentDto;
 import com.fisa.pg.dto.response.PaymentMethodUpdateResponseDto;
 import com.fisa.pg.entity.user.Merchant;
 import com.fisa.pg.feign.dto.card.response.CardPaymentApprovalResponseDto;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -85,6 +87,19 @@ public class PaymentController {
 
         CardPaymentApprovalResponseDto data = paymentService.processPaymentApproval(request);
         return ResponseEntity.ok(BaseResponse.onSuccess("결제 승인 요청이 완료되었습니다.", data));
+    }
+
+    /**
+     * orderId 기반으로 결제 조회를 조회하는 API
+     */
+    @GetMapping("/payments/orders/{orderId}")
+    public ResponseEntity<BaseResponse<PaymentDto>> getPaymentByOrderId(
+            @AuthenticationPrincipal Merchant merchant,
+            @RequestBody String orderId
+    ) {
+        log.info("주문 ID로 결제 조회 요청: orderId={}", orderId);
+        PaymentDto data = paymentService.getPaymentByOrderId(orderId, merchant);
+        return ResponseEntity.ok(BaseResponse.onSuccess("결제 정보 조회 성공", data));
     }
 
 }
