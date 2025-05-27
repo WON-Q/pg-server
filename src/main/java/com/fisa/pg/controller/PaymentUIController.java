@@ -3,7 +3,6 @@ package com.fisa.pg.controller;
 import com.fisa.pg.entity.payment.Payment;
 import com.fisa.pg.entity.transaction.Transaction;
 import com.fisa.pg.entity.transaction.TransactionStatus;
-import com.fisa.pg.entity.user.Merchant;
 import com.fisa.pg.feign.dto.appcard.request.AppCardAuthRequestDto;
 import com.fisa.pg.repository.PaymentRepository;
 import com.fisa.pg.repository.TransactionRepository;
@@ -79,11 +78,16 @@ public class PaymentUIController {
                 .build();
 
         // 앱카드 인증 요청 처리 (내부에서 원큐오더 서버로 딥링크 전송됨)
-        paymentService.requestAppCardAuth(authRequest);
+        String deeplink = paymentService.requestDeeplink(authRequest);
 
         // 처리 완료 응답
         log.info("앱카드 인증 요청 처리 완료: paymentId={}", paymentId);
-        Map<String, String> response = Map.of("status", "SUCCESS");
+
+        Map<String, String> response = Map.of(
+                "status", "success",
+                "message", "앱카드 인증 요청이 성공적으로 처리되었습니다.",
+                "deeplink", deeplink
+        );
         return ResponseEntity.ok(response);
     }
 }

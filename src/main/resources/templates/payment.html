@@ -295,18 +295,23 @@
         })
         .then(response => {
             console.log("서버 응답 상태:", response.status);
+            if (!response.ok) {
+                throw new Error("서버 응답 오류: " + response.status);
+            }
             return response.json();
         })
         .then(data => {
             console.log("서버 응답 데이터:", data);
-            alert("우리Pay 결제 요청이 처리되었습니다: " + JSON.stringify(data));
-
-            // 버튼 상태 복원
-            submitButton.innerHTML = originalContent;
+            if (data.status === "success" && data.deeplink) {
+                // 딮링크로 리다이렉트
+                window.location.href = data.deeplink;
+            } else {
+                throw new Error("딮링크가 응답에 포함되지 않았습니다.");
+            }
         })
         .catch(error => {
             console.error("오류 발생:", error);
-            alert("우리Pay 결제 처리 중 오류가 발생했습니다: " + error);
+            alert("우리Pay 결제 처리 중 오류가 발생했습니다: " + error.message);
 
             // 버튼 상태 복원
             submitButton.innerHTML = originalContent;
@@ -328,7 +333,7 @@
         alert("우리뱅크 결제를 준비 중입니다");
       });
 
-    // 우리카드 버튼 처리 (alert로 변경)
+    // 우리카드 버튼 처리
     document
       .querySelector(".woori-card-button")
       .addEventListener("click", function () {
