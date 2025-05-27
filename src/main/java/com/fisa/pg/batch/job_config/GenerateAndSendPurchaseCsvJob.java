@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -65,6 +66,9 @@ public class GenerateAndSendPurchaseCsvJob {
                 .reader(merchantReader)
                 .processor(merchantProcessor)
                 .writer(merchantWriter)
+                .faultTolerant()
+                .retry(IOException.class)
+                .retryLimit(3)
                 .build();
     }
 
