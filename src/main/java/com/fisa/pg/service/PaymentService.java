@@ -195,7 +195,7 @@ public class PaymentService {
                     .orElseThrow(() -> new TransactionNotFoundException(request.getTxnId()));
 
             DeepLinkPaymentRequestDto deepLinkRequest = DeepLinkPaymentRequestDto.builder()
-                    .orderId(request.getOrderId())
+                    .orderId(transaction.getPayment().getOrderId())
                     .paymentId(transaction.getPayment().getId().toString())
                     .deepLink(deepLink)
                     .build();

@@ -3,6 +3,7 @@ package com.fisa.pg.controller;
 import com.fisa.pg.entity.payment.Payment;
 import com.fisa.pg.entity.transaction.Transaction;
 import com.fisa.pg.entity.transaction.TransactionStatus;
+import com.fisa.pg.entity.user.Merchant;
 import com.fisa.pg.feign.dto.appcard.request.AppCardAuthRequestDto;
 import com.fisa.pg.repository.PaymentRepository;
 import com.fisa.pg.repository.TransactionRepository;
@@ -68,11 +69,13 @@ public class PaymentUIController {
                         payment, TransactionStatus.PENDING)
                 .orElseThrow(() -> new IllegalStateException("처리 가능한 트랜잭션이 없습니다"));
 
+
         // 앱카드 인증 요청 DTO 생성
         AppCardAuthRequestDto authRequest = AppCardAuthRequestDto.builder()
                 .txnId(transaction.getTransactionId())
-                .orderId(payment.getOrderId())
+                .merchantName(payment.getMerchant().getName())
                 .amount(payment.getAmount())
+                .callbackUrl(payment.getCallbackUrl())
                 .build();
 
         // 앱카드 인증 요청 처리 (내부에서 원큐오더 서버로 딥링크 전송됨)
