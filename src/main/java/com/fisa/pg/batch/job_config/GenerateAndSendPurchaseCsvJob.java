@@ -61,7 +61,7 @@ public class GenerateAndSendPurchaseCsvJob {
                                 ItemProcessor<Merchant, Merchant> merchantProcessor,
                                 ItemWriter<Merchant> merchantWriter) {
         return new StepBuilder("GenerateCsvAndSendSftpStep", jobRepository)
-                .<Merchant, Merchant>chunk(10, transactionManager)
+                .<Merchant, Merchant>chunk(5000, transactionManager)
                 .reader(merchantReader)
                 .processor(merchantProcessor)
                 .writer(merchantWriter)
