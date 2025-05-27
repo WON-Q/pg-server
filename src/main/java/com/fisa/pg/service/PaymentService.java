@@ -1,14 +1,11 @@
 package com.fisa.pg.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fisa.pg.dto.request.AppCardPaymentRequestDto;
 import com.fisa.pg.dto.request.PaymentCreateRequestDto;
 import com.fisa.pg.dto.request.PaymentMethodUpdateRequestDto;
-import com.fisa.pg.dto.request.PaymentVerifyRequestDto;
-import com.fisa.pg.dto.response.AppCardPaymentResponseDto;
 import com.fisa.pg.dto.response.PaymentCreateResponseDto;
+import com.fisa.pg.dto.response.PaymentDto;
 import com.fisa.pg.dto.response.PaymentMethodUpdateResponseDto;
-import com.fisa.pg.dto.response.PaymentVerifyResponseDto;
 import com.fisa.pg.entity.card.BinInfo;
 import com.fisa.pg.entity.card.UserCard;
 import com.fisa.pg.entity.payment.Payment;
@@ -38,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
@@ -309,37 +307,16 @@ public class PaymentService {
     }
 
     /**
-     * 결제 검증을 처리하는 메서드
-     * <br/>
-     * 이 메서드는 결제 흐름 중 <b>44-46번째 단계</b>를 처리합니다.
-     * 자세한 내용은 프로젝트 내 {@code docs/payment-flow.md} 문서를 참조해 주세요.
-     *
-     * @param request 결제 검증 요청 DTO
-     * @return 결제 검증 응답 DTO
+     * orderId 기반으로 결제 정보를 조회하는 메서드
      */
     @Transactional(readOnly = true)
-    public PaymentVerifyResponseDto verifyPayment(PaymentVerifyRequestDto request) {
-        String transactionId = request.getTransactionId();
-        log.info("결제 검증 처리 시작: transactionId={}", transactionId);
+    public PaymentDto getPaymentByOrderId(String orderId, Merchant merchant) {
+        log.info("결제 정보 조회 시작: orderId={}, merchantId={}", orderId, merchant.getId());
 
-        // 트랜잭션 조회
-        Transaction transaction = transactionRepository.findById(transactionId)
-                .orElseThrow(() -> {
-                    log.error("트랜잭션을 찾을 수 없음: transactionId={}", transactionId);
-                    return new TransactionNotFoundException(transactionId);
-                });
+        Payment payment = paymentRepository.findByOrderIdAndMerchant(orderId, merchant)
+                .orElseThrow(() -> new IllegalArgumentException("해당 주문 ID에 대한 결제를 찾을 수 없습니다: " + orderId));
 
-        // 결제 정보 조회
-        Payment payment = transaction.getPayment();
-        PaymentStatus status = payment.getPaymentStatus();
-
-        log.info("결제 검증 결과: transactionId={}, status={}", transactionId, status);
-
-        // 결제 검증 응답 생성
-        return PaymentVerifyResponseDto.builder()
-                .transactionId(transactionId)
-                .status(status)
-                .build();
+        return PaymentDto.from(payment);
     }
 
 }
