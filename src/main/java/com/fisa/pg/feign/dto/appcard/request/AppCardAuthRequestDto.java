@@ -30,12 +30,7 @@ public class AppCardAuthRequestDto {
     /**
      * 가맹점 ID
      */
-    private Long merchantId;
-
-    /**
-     * 주문 ID
-     */
-    private String orderId;
+    private String merchantName;
 
     /**
      * 콜백 URL (결제 완료 후 리다이렉트)
