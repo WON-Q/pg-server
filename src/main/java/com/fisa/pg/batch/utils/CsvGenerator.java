@@ -9,6 +9,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Component
@@ -18,7 +20,9 @@ public class CsvGenerator {
     private String outputDirectory;
 
     public File generate(Merchant merchant, List<Payment> payments) throws IOException {
-        String fileName = "purchase_" + merchant.getId() + ".csv";
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String fileName = String.format("purchase_%d_%s.csv", merchant.getId(), timestamp);
+
         File dir = new File(outputDirectory);
         if (!dir.exists()) dir.mkdirs();
 
