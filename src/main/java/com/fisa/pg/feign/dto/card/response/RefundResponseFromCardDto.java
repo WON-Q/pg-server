@@ -21,4 +21,5 @@ public class RefundResponseFromCardDto {
      * 환불 응답의 결제 상태
      */
     private PaymentStatus paymentStatus;
+
 }

@@ -113,12 +113,11 @@ public class Payment {
     /**
      * 결제 상태를 업데이트하는 메서드
      *
-     * @param newStatus 새로운 결제 상태
+     * @param Status 새로운 결제 상태
      */
-    public void updatePaymentStatus(PaymentStatus newStatus) {
-        this.paymentStatus = newStatus;
+    public void updatePaymentStatus(PaymentStatus Status) {
+        this.paymentStatus = Status;
     }
-
     /**
      * 결제 수단을 업데이트하는 메서드
      * <br />
@@ -142,5 +141,6 @@ public class Payment {
     public boolean isSucceeded() {
         return this.paymentStatus == PaymentStatus.SUCCEEDED;
     }
+
 
 }

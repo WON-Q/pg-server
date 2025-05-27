@@ -13,11 +13,13 @@ import com.fisa.pg.repository.PaymentRepository;
 import com.fisa.pg.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
  * 환불 요청을 처리하는 서비스 클래스입니다.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RefundService {
@@ -53,11 +55,17 @@ public class RefundService {
                 .txnId(transaction.txnId())
                 .build();
 
-        RefundResponseFromCardDto cardResponse = cardClient.requestRefundToCard(cardRequest);
+        RefundResponseFromCardDto cardResponse = cardClient.requestRefundToCard(cardRequest).getData();
+        log.info("카드사 환불 응답: {}", cardResponse);
 
         // 4. 결과에 따라 상태 업데이트
+        // cardResponse.getPaymentStatus() == PaymentStatus.CANCELLED 값 로깅
+        log.info ("테스트: " + String.valueOf(cardResponse.getPaymentStatus() == PaymentStatus.CANCELLED));
+
         if (cardResponse.getPaymentStatus() == PaymentStatus.CANCELLED) {
             payment.updatePaymentStatus(PaymentStatus.CANCELLED);
+
+            // 아래 코드가 범인이다.
             transaction.updateTransactionStatus(TransactionStatus.CANCELLED);
         } else {
             transaction.updateTransactionStatus(TransactionStatus.REFUND_FAILED);

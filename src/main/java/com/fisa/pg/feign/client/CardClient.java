@@ -36,7 +36,7 @@ public interface CardClient {
      * @return 환불 응답 정보
      */
     @PostMapping("/api/v1/card/payment/refund")
-    RefundResponseFromCardDto requestRefundToCard(@RequestBody RefundRequestToCardDto request);
+    BaseResponse<RefundResponseFromCardDto> requestRefundToCard(@RequestBody RefundRequestToCardDto request);
 
 
 }
