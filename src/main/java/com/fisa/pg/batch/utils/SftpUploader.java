@@ -1,5 +1,6 @@
 package com.fisa.pg.batch.utils;
 
+import lombok.extern.slf4j.Slf4j;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.sftp.SFTPClient;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
@@ -8,8 +9,12 @@ import net.schmizz.sshj.xfer.LocalSourceFile;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
+@Slf4j
 @Component
 public class SftpUploader {
 
@@ -33,74 +38,74 @@ public class SftpUploader {
             throw new IllegalArgumentException("전송할 파일이 존재하지 않습니다: " + file);
         }
 
-        try (SSHClient ssh = new SSHClient()) {
+        sftpRetryTemplate.execute(context -> {
+            try (SSHClient ssh = new SSHClient()) {
+                ssh.addHostKeyVerifier(new PromiscuousVerifier());
+                ssh.connect(sftpHost, sftpPort);
+                ssh.authPassword(sftpUsername, sftpPassword);
 
-            // 모든 호스트 키를 허용하는 검증기 (운영 시엔 보안상 적절한 HostKeyVerifier로 대체 필요)
-            ssh.addHostKeyVerifier(new PromiscuousVerifier());
-
-            ssh.connect(sftpHost, sftpPort);
-            ssh.authPassword(sftpUsername, sftpPassword);
-
-            try (SFTPClient sftp = ssh.newSFTPClient()) {
-                sftp.put(new LocalSourceFile() {
-                    @Override
-                    public String getName() {
-                        return file.getName();
-                    }
-
-                    @Override
-                    public long getLength() {
-                        return file.length();
-                    }
-
-                    @Override
-                    public InputStream getInputStream() {
-                        try {
-                            return new FileInputStream(file);
-                        } catch (IOException e) {
-                            throw new UncheckedIOException("파일 스트림 생성 실패", e);
+                try (SFTPClient sftp = ssh.newSFTPClient()) {
+                    sftp.put(new LocalSourceFile() {
+                        @Override
+                        public String getName() {
+                            return file.getName();
                         }
-                    }
 
-                    @Override
-                    public boolean isFile() {
-                        return true;
-                    }
+                        @Override
+                        public long getLength() {
+                            return file.length();
+                        }
 
-                    @Override
-                    public boolean isDirectory() {
-                        return false;
-                    }
+                        @Override
+                        public InputStream getInputStream() throws IOException {
+                            return new FileInputStream(file);
+                        }
 
-                    @Override
-                    public Iterable<? extends LocalSourceFile> getChildren(LocalFileFilter localFileFilter) throws IOException {
-                        return null;
-                    }
+                        @Override
+                        public boolean isFile() {
+                            return true;
+                        }
 
-                    @Override
-                    public boolean providesAtimeMtime() {
-                        return false;
-                    }
+                        @Override
+                        public boolean isDirectory() {
+                            return false;
+                        }
 
-                    @Override
-                    public long getLastAccessTime() throws IOException {
-                        return 0;
-                    }
+                        @Override
+                        public Iterable<? extends LocalSourceFile> getChildren(LocalFileFilter localFileFilter) {
+                            return null;
+                        }
 
-                    @Override
-                    public long getLastModifiedTime() throws IOException {
-                        return 0;
-                    }
+                        @Override
+                        public boolean providesAtimeMtime() {
+                            return false;
+                        }
 
-                    @Override
-                    public int getPermissions() {
-                        return 0644; // rw-r--r--
-                    }
-                }, sftpRemoteDir + "/");
+                        @Override
+                        public long getLastAccessTime() {
+                            return 0;
+                        }
+
+                        @Override
+                        public long getLastModifiedTime() {
+                            return 0;
+                        }
+
+                        @Override
+                        public int getPermissions() {
+                            return 0644;
+                        }
+                    }, sftpRemoteDir + "/");
+
+                    log.info(">>>>>>>>>>>>>>SFTP 전송 성공: {}", file.getName());
+
+                }
+            } catch (IOException e) {
+                log.warn(">>>>>>>>>>>>>>SFTP 전송 재시도 중 오류 발생: {}", e.getMessage());
+                throw e;
             }
 
-        } catch (IOException e) {
-            throw new RuntimeException("SFTP 전송 실패: " + file.getName(), e);
-        }
+            return null;
+        });
     }
 }
