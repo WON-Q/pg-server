@@ -11,10 +11,12 @@ import com.fisa.pg.repository.AdminRepository;
 import com.fisa.pg.repository.MerchantRepository;
 import com.fisa.pg.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -38,16 +40,11 @@ public class AuthService {
         Merchant merchant = merchantRepository.findByEmail(request.getEmail())
                 .orElseThrow(InvalidCredentialsException::new);
 
-        System.out.println("📌 사용자 입력 비번: " + request.getPassword());
-        System.out.println("📌 DB 저장된 비번: " + merchant.getPassword());
-        System.out.println("📌 매칭 결과: " + passwordEncoder.matches(request.getPassword(), merchant.getPassword()));
-
+        log.info("조회된 가맹점 정보: {}", merchant.getId());
 
         if (!merchant.isActive()) {
             throw new InvalidCredentialsException();
         }
-
-
 
         if (!passwordEncoder.matches(request.getPassword(), merchant.getPassword())) {
             throw new InvalidCredentialsException();
@@ -73,11 +70,10 @@ public class AuthService {
      */
     @Transactional
     public LoginResponseDto handleAdminLogin(LoginRequestDto request) {
-        System.out.println("📨 요청 받은 이메일: '" + request.getEmail() + "'");
-        System.out.println("🔍 DB 검색 결과: " + merchantRepository.findByEmail(request.getEmail()));
-
         Admin admin = adminRepository.findByEmail(request.getEmail())
                 .orElseThrow(InvalidCredentialsException::new);
+
+        log.info("조회된 관리자 정보: {}", admin.getId());
 
         if (!admin.isActive()) {
             throw new InvalidCredentialsException();
