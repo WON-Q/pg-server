@@ -1,12 +1,11 @@
 package com.fisa.pg.config.security;
 
-import com.fisa.pg.config.security.filter.PaymentTokenAuthenticationFilter;
 import com.fisa.pg.config.security.filter.JwtAuthenticationFilter;
+import com.fisa.pg.config.security.filter.PaymentTokenAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -15,21 +14,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 @Configuration
-@EnableWebSecurity
+@EnableWebSecurity(debug = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final PaymentTokenAuthenticationFilter paymentTokenAuthenticationFilter;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    // 공통 설정을 추출한 메서드
+    // 공통 보안 설정
     private HttpSecurity configureCommon(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
@@ -37,89 +31,83 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Order(1) // 앱카드 API 관련 필터 체인
-    public SecurityFilterChain appCardFilterChain(HttpSecurity http) throws Exception {
-        return configureCommon(http)
-                .securityMatcher("/payments/authorize", "/payments/authorize/**", "/authorization", "/authorization/**")
-                .authorizeHttpRequests(request -> request.anyRequest().permitAll())
-                .build();
-    }
-
-    @Bean
-    @Order(2) // 주문 생성 - Payment Token 관련 필터 체인
+    @Order(1) // 결제 관련 - PaymentTokenAuthenticationFilter 적용
     public SecurityFilterChain paymentTokenFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
-                .cors(cors -> {}) // CORS 허용
-                .securityMatcher("/api/payment/**", "/api/order/**", "/prepare")
-                .authorizeHttpRequests(request -> request
-                        .requestMatchers(HttpMethod.OPTIONS, "/prepare").permitAll()
-                        .requestMatchers("/prepare").authenticated()
-                        .requestMatchers("/method").permitAll()
-                        .anyRequest().authenticated())
+                .securityMatcher("/prepare", "/payments/orders/**", "/api/payments/refund")
+                .authorizeHttpRequests(request ->
+                        request.anyRequest().hasAuthority("MERCHANT")
+                )
                 .addFilterBefore(paymentTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
     @Bean
-    @Order(3) // JWT 토큰 - 대시보드 관련 필터 체인
-    public SecurityFilterChain jwtFilterChain(HttpSecurity http) throws Exception {
+    @Order(2) // 관리자 대시보드 - JWT 인증 필요
+    public SecurityFilterChain adminJwtFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
-                .securityMatcher("/api/users/dashboard/**", "/api/admin/**", "/api/merchant/**")
-                .authorizeHttpRequests(request -> request
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/merchant/**").hasRole("MERCHANT")
-                        .anyRequest().hasAnyRole("ADMIN", "MERCHANT"))
+                .securityMatcher("/api/admin/**")
+                .authorizeHttpRequests(request ->
+                        request.anyRequest().hasAuthority("ADMIN")
+                )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
     @Bean
-    @Order(4) // Opaque 토큰 필터 체인
-    public SecurityFilterChain opaqueTokenFilterChain(HttpSecurity http) throws Exception {
+    @Order(3) // 가맹점 대시보드 - JWT 인증 필요
+    public SecurityFilterChain merchantJwtFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
-                .securityMatcher("/api/external/**")
-                .authorizeHttpRequests(request -> request.anyRequest().authenticated())
-                // 여기에 Opaque 토큰 필터 추가 필요
+                .securityMatcher("/api/merchants/**", "/api/merchant/**")
+                .authorizeHttpRequests(request ->
+                        request.anyRequest().hasAuthority("MERCHANT")
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
     @Bean
-    @Order(5) // 인증이 필요 없는 기본 요청용 필터 체인
-    public SecurityFilterChain defaultFilterChain(HttpSecurity http) throws Exception {
+    @Order(4) // 인증이 필요 없는 결제 관련 엔드포인트
+    public SecurityFilterChain paymentPublicFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
-                .cors(cors -> {}) // CORS 설정 활성화
-                .securityMatcher("/api/auth/**", "/actuator/health", "/test/hash", "/public/**", "/method","/payment/ui/**","/favicon.ico", "/api/payments/verify")
-                .authorizeHttpRequests(request -> request
-                        .requestMatchers(HttpMethod.OPTIONS, "/method").permitAll()
-                        .requestMatchers("/method").permitAll()
-                        .anyRequest().permitAll()
+                .securityMatcher("/method", "/payments/authorize", "/payment/ui/**")
+                .authorizeHttpRequests(request ->
+                        request.anyRequest().permitAll()
                 )
                 .build();
     }
 
     @Bean
-    @Order(6)
-    public SecurityFilterChain fallbackFilterChain(HttpSecurity http) throws Exception {
+    @Order(5) // 인증이 필요 없는 인증 관련 엔드포인트
+    public SecurityFilterChain authPublicFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
-                .authorizeHttpRequests(request -> request
-                        .requestMatchers("/api/payments/refund").permitAll()
-                        .requestMatchers("/api/merchant/**").hasRole("MERCHANT")
-                        .anyRequest().authenticated())
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .securityMatcher("/api/auth/login", "/api/auth/admin/login")
+                .authorizeHttpRequests(request ->
+                        request.anyRequest().permitAll()
+                )
                 .build();
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // 정확히 명시
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
+    @Order(6) // 기타 허용된 공개 엔드포인트
+    public SecurityFilterChain miscPublicFilterChain(HttpSecurity http) throws Exception {
+        return configureCommon(http)
+                .securityMatcher("/actuator/health", "/favicon.ico", "/public/**")
+                .authorizeHttpRequests(request ->
+                        request.anyRequest().permitAll()
+                )
+                .build();
+    }
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
+    @Bean
+    @Order(Integer.MAX_VALUE) // 그 외 모든 요청 거부
+    public SecurityFilterChain denyAllFilterChain(HttpSecurity http) throws Exception {
+        return configureCommon(http)
+                .securityMatcher("/**")
+                .authorizeHttpRequests(request ->
+                        request.anyRequest().denyAll()
+                )
+                .build();
     }
 
     @Bean
