@@ -59,51 +59,52 @@ public class GenerateAndSendPurchaseCsvJob {
 
     @Bean
     public Step settlementStep(JobRepository jobRepository,
-                               PlatformTransactionManager transactionManager) {
+                               PlatformTransactionManager transactionManager,
+                               org.springframework.retry.support.RetryTemplate retryTemplate) {
+
         return new StepBuilder("SettlementSummaryStep", jobRepository)
-                .tasklet((contrib, ctx) -> {
-                    // 1) 어제 00:00:00 ~ 23:59:59
-                    LocalDate yesterday = LocalDate.now().minusDays(1);
-                    LocalDateTime start = yesterday.atStartOfDay();
-                    LocalDateTime end = yesterday.atTime(23, 59, 59);
+                .tasklet((contrib, ctx) ->
+                                retryTemplate.execute(retryCtx -> {
+                                    // 1) 어제 00:00:00 ~ 23:59:59
+                                    LocalDate yesterday = LocalDate.now().minusDays(1);
+                                    LocalDateTime start = yesterday.atStartOfDay();
+                                    LocalDateTime end = yesterday.atTime(23, 59, 59);
 
-                    // 2) 정산 시각: 오늘 02:00
-                    LocalDateTime settlementTime = LocalDateTime.now()
-                            .withHour(2).withMinute(0).withSecond(0).withNano(0);
+                                    // 2) 정산 시각: 오늘 02:00
+                                    LocalDateTime settlementTime = LocalDateTime.now()
+                                            .withHour(2).withMinute(0).withSecond(0).withNano(0);
 
-                    // 3) 활성 가맹점 조회
-                    List<Merchant> merchants = merchantRepository.findByIsActiveTrue();
+                                    // 3) 활성 가맹점 조회
+                                    List<Merchant> merchants = merchantRepository.findByIsActiveTrue();
 
-                    // 4) 합계 계산 및 요약 DTO 생성
-                    List<MerchantSummary> summaries = new ArrayList<>();
-                    for (Merchant m : merchants) {
-                        List<Payment> payments = paymentRepository
-                                .findByMerchantAndPaymentStatusAndApprovedAtBetween(
-                                        m, PaymentStatus.SUCCEEDED, start, end);
-                        if (payments.isEmpty()) continue;
+                                    // 4) 일일 매출 합계 계산 및 요약 DTO 생성
+                                    List<MerchantSummary> summaries = new ArrayList<>();
+                                    for (Merchant m : merchants) {
+                                        List<Payment> payments = paymentRepository
+                                                .findByMerchantAndPaymentStatusAndApprovedAtBetween(
+                                                        m, PaymentStatus.SUCCEEDED, start, end);
+                                        if (payments.isEmpty()) continue;
 
-                        BigDecimal total = payments.stream()
-                                .map(p -> BigDecimal.valueOf(p.getAmount()))
-                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                        BigDecimal total = payments.stream()
+                                                .map(p -> BigDecimal.valueOf(p.getAmount()))
+                                                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                        summaries.add(new MerchantSummary(
-                                m.getBusinessNumber(), // MID000… 형식
-                                m.getName(),
-                                total,
-                                payments.get(0).getCurrency(),
-                                settlementTime
-                        ));
-                    }
+                                        summaries.add(new MerchantSummary(
+                                                m.getBusinessNumber(),
+                                                m.getName(),
+                                                total,
+                                                payments.get(0).getCurrency(),
+                                                settlementTime
+                                        ));
+                                    }
 
-                    // 5) CSV 생성 & SFTP 전송
-                    File csv = csvGenerator.generateSummary(summaries);
-                    sftpUploader.upload(csv);
+                                    // 5) CSV 생성 & SFTP 전송
+                                    File csv = csvGenerator.generateSummary(summaries);
+                                    sftpUploader.upload(csv);
 
-                    return RepeatStatus.FINISHED;
-                }, transactionManager)
-                .transactionManager(transactionManager)
+                                    return RepeatStatus.FINISHED;
+                                })
+                        , transactionManager)
                 .build();
     }
 }
-
-

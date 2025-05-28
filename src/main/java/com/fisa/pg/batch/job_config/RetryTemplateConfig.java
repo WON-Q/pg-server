@@ -4,26 +4,23 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
 import org.springframework.retry.policy.SimpleRetryPolicy;
-import org.springframework.retry.support.RetryTemplate;
 
 @Configuration
 public class RetryTemplateConfig {
 
+    // Tasklet 모델 재시도 전략(Chunk 모델과 달리 프레임워크에서 재시도 기능을 제공해주지 않음)
     @Bean
-    public RetryTemplate sftpRetryTemplate() {
-        RetryTemplate retryTemplate = new RetryTemplate();
+    public org.springframework.retry.support.RetryTemplate retryTemplate() {
+        org.springframework.retry.support.RetryTemplate template = new org.springframework.retry.support.RetryTemplate();
 
-        // 최대 재시도 횟수 3회
-        SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy();
-        retryPolicy.setMaxAttempts(3);
+        SimpleRetryPolicy policy = new SimpleRetryPolicy();
+        policy.setMaxAttempts(3);                // 총 3회 시도
 
-        // 재시도 간 간격 2000ms
-        FixedBackOffPolicy backOffPolicy = new FixedBackOffPolicy();
-        backOffPolicy.setBackOffPeriod(2000);
+        FixedBackOffPolicy backOff = new FixedBackOffPolicy();
+        backOff.setBackOffPeriod(2000);          // 시도 간격 2초
 
-        retryTemplate.setRetryPolicy(retryPolicy);
-        retryTemplate.setBackOffPolicy(backOffPolicy);
-
-        return retryTemplate;
+        template.setRetryPolicy(policy);
+        template.setBackOffPolicy(backOff);
+        return template;
     }
 }
