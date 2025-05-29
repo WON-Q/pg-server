@@ -3,6 +3,7 @@ package com.fisa.pg.batch.job_config;
 import com.fisa.pg.batch.dto.MerchantSummary;
 import com.fisa.pg.batch.utils.CsvGenerator;
 import com.fisa.pg.batch.utils.SftpUploader;
+import com.fisa.pg.entity.card.CardType;
 import com.fisa.pg.entity.payment.Payment;
 import com.fisa.pg.entity.payment.PaymentStatus;
 import com.fisa.pg.entity.user.Merchant;
@@ -24,8 +25,9 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableBatchProcessing
@@ -78,26 +80,42 @@ public class GenerateAndSendPurchaseCsvJob {
                                     List<Merchant> merchants = merchantRepository.findByIsActiveTrue();
 
                                     // 4) 일일 매출 합계 계산 및 요약 DTO 생성
-                                    List<MerchantSummary> summaries = new ArrayList<>();
-                                    for (Merchant m : merchants) {
-                                        List<Payment> payments = paymentRepository
-                                                .findByMerchantAndPaymentStatusAndApprovedAtBetween(
-                                                        m, PaymentStatus.SUCCEEDED, start, end);
-                                        if (payments.isEmpty()) continue;
+                                    List<MerchantSummary> summaries = merchantRepository.findByIsActiveTrue().stream()
+                                            .map(m -> {
+                                                List<Payment> payments = paymentRepository
+                                                        .findByMerchantAndPaymentStatusAndApprovedAtBetween(
+                                                                m, PaymentStatus.SUCCEEDED, start, end);
+                                                if (payments.isEmpty()) return null;
 
-                                        BigDecimal total = payments.stream()
-                                                .map(p -> BigDecimal.valueOf(p.getAmount()))
-                                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                                // 신용카드 합계
+                                                BigDecimal creditSum = payments.stream()
+                                                        .filter(p -> p.getUserCard() != null
+                                                                && p.getUserCard().getCardType() == CardType.CREDIT)
+                                                        .map(p -> BigDecimal.valueOf(p.getAmount()))
+                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                                        summaries.add(new MerchantSummary(
-                                                m.getBusinessNumber(),
-                                                m.getName(),
-                                                total,
-                                                payments.get(0).getCurrency(),
-                                                settlementTime
-                                        ));
-                                    }
+                                                // 체크카드 합계
+                                                BigDecimal debitSum = payments.stream()
+                                                        .filter(p -> p.getUserCard() != null
+                                                                && p.getUserCard().getCardType() == CardType.DEBIT)
+                                                        .map(p -> BigDecimal.valueOf(p.getAmount()))
+                                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+                                                // 전체 합계
+                                                BigDecimal totalSum = creditSum.add(debitSum);
+
+                                                return new MerchantSummary(
+                                                        m.getBusinessNumber(),
+                                                        m.getName(),
+                                                        creditSum,
+                                                        debitSum,
+                                                        totalSum,
+                                                        payments.get(0).getCurrency(),
+                                                        settlementTime
+                                                );
+                                            })
+                                            .filter(Objects::nonNull)
+                                            .collect(Collectors.toList());
                                     // 5) CSV 생성 & SFTP 전송
                                     File csv = csvGenerator.generateSummary(summaries);
                                     sftpUploader.upload(csv);

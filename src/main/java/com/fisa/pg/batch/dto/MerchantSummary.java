@@ -9,8 +9,8 @@ import java.time.LocalDateTime;
 public record MerchantSummary(
         String merchantId,
         String merchantName,
-        BigDecimal creditAmount,    // 신용카드 총액
-        BigDecimal checkAmount,     // 체크카드 총액
+        BigDecimal creditAmount,
+        BigDecimal debitAmount,
         BigDecimal totalAmount,
         String currency,
         LocalDateTime settlementDate

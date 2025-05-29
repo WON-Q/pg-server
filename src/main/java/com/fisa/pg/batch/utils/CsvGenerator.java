@@ -32,15 +32,17 @@ public class CsvGenerator {
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(csvFile))) {
             // 헤더
-            writer.write("merchantId,merchantName,total_amount,currency,settlement_date");
+            writer.write("merchant_id,merchant_name,credit_card_amount,check_card_amount,total_amount,currency,settlement_date");
             writer.newLine();
 
             // 데이터
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             for (MerchantSummary ms : summaries) {
                 writer.write(String.join(",",
-                        ms.merchantId(),         // record 접근자
+                        ms.merchantId(),
                         ms.merchantName(),
+                        ms.creditAmount().toPlainString(),
+                        ms.debitAmount().toPlainString(),
                         ms.totalAmount().toPlainString(),
                         ms.currency(),
                         ms.settlementDate().format(dtf)
