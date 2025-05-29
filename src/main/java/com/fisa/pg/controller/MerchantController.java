@@ -1,10 +1,14 @@
 package com.fisa.pg.controller;
 
 import com.fisa.pg.dto.request.CreateApiKeyRequestDto;
+import com.fisa.pg.dto.request.CreateWebhookRequestDto;
 import com.fisa.pg.dto.response.ApiKeyResponseDto;
+import com.fisa.pg.dto.response.BaseResponse;
 import com.fisa.pg.dto.response.CreateApiKeyResponseDto;
+import com.fisa.pg.dto.response.CreateWebhookResponseDto;
 import com.fisa.pg.entity.user.Merchant;
 import com.fisa.pg.service.ApiKeyService;
+import com.fisa.pg.service.WebhookService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -19,20 +23,20 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 /**
- * 가맹점용 API 키 관리 컨트롤러
+ * 가맹점용 컨트롤러
  * <p>
- * 이 컨트롤러는 가맹점에게 자신의 API 키를 생성, 조회 및 비활성화할 수 있는 엔드포인트를 제공합니다.
- * 가맹점은 인증된 상태에서만 이 API를 사용할 수 있으며, 자신의 API 키만 관리할 수 있습니다.
- * API 키는 가맹점이 PG 시스템과 연동하기 위해 필요한 인증 수단입니다.
+ * 가맹점은 인증된 상태에서만 이 API를 사용할 수 있습니다.
  * </p>
  */
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/merchants/api-keys")
-public class MerchantApiKeyController {
+@RequestMapping("/api/merchants")
+public class MerchantController {
 
     private final ApiKeyService apiKeyService;
+
+    private final WebhookService webhookService;
 
     /**
      * 가맹점용 API 키 발급 엔드포인트
@@ -47,7 +51,7 @@ public class MerchantApiKeyController {
      * @return 생성된 API 키 정보와 함께 201 Created 응답
      * @throws jakarta.validation.ConstraintViolationException 요청 데이터 유효성 검증 실패 시
      */
-    @PostMapping
+    @PostMapping("/api-keys")
     public ResponseEntity<CreateApiKeyResponseDto> createApiKey(
             @Valid @RequestBody CreateApiKeyRequestDto requestDto,
             @AuthenticationPrincipal @NotNull Merchant merchant
@@ -80,7 +84,7 @@ public class MerchantApiKeyController {
      * @param pageable 페이징 정보
      * @return 가맹점의 API 키 목록 페이지와 함께 200 OK 응답
      */
-    @GetMapping
+    @GetMapping("/api-keys")
     public ResponseEntity<Page<ApiKeyResponseDto>> getApiKeys(
             @AuthenticationPrincipal @NotNull Merchant merchant,
             Pageable pageable
@@ -110,7 +114,7 @@ public class MerchantApiKeyController {
      * @throws IllegalArgumentException API 키가 존재하지 않거나 가맹점이 소유하지 않은 경우
      * @throws IllegalStateException    API 키가 이미 비활성화된 경우
      */
-    @PatchMapping("/{keyId}/deactivate")
+    @PatchMapping("/api-keys/{keyId}/deactivate")
     public ResponseEntity<Void> deactivateApiKey(
             @PathVariable Long keyId,
             @AuthenticationPrincipal @NotNull Merchant merchant
@@ -122,5 +126,39 @@ public class MerchantApiKeyController {
 
         log.info("API 키 비활성화 완료: 가맹점 ID={}, 키 ID={}", merchant.getId(), keyId);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 가맹점 웹훅 생성 API
+     * <br/>
+     * 가맹점의 웹훅을 생성합니다.
+     *
+     * @param merchant   웹훅을 생성할 가맹점
+     * @param requestDto 웹훅 요청 DTO
+     * @return 웹훅 응답 DTO
+     */
+    @PostMapping("/webhook")
+    public ResponseEntity<BaseResponse<CreateWebhookResponseDto>> createWebhook(
+            @AuthenticationPrincipal Merchant merchant,
+            @RequestBody CreateWebhookRequestDto requestDto
+    ) {
+        CreateWebhookResponseDto response = webhookService.createWebhook(merchant.getId(), requestDto);
+        return ResponseEntity.ok(BaseResponse.onSuccess("가맹점 웹훅 생성 성공", response));
+    }
+
+    /**
+     * 가맹점 웹훅 조회 API
+     * <br/>
+     * 가맹점의 웹훅 설정 정보를 조회합니다.
+     *
+     * @param merchant 로그인한 가맹점
+     * @return 웹훅 응답 DTO
+     */
+    @GetMapping("/webhook")
+    public ResponseEntity<BaseResponse<CreateWebhookResponseDto>> getWebhook(
+            @AuthenticationPrincipal Merchant merchant
+    ) {
+        CreateWebhookResponseDto response = CreateWebhookResponseDto.from(merchant);
+        return ResponseEntity.ok(BaseResponse.onSuccess("가맹점 웹훅 조회 성공", response));
     }
 }
