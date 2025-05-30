@@ -123,11 +123,30 @@
           justify-content: center;
           font-weight: bold;
           font-size: 16px;
+          overflow: hidden;
         }
 
         .woori-pay-button .logo-icon {
           background-color: white;
           color: #0067ac;
+        }
+
+        .woori-bank-button .logo-icon {
+          background-color: white;
+          color: #0067ac;
+        }
+
+        .woori-card-button .logo-icon {
+          background-color: white;
+          color: #0067ac;
+        }
+
+        /* 로고 이미지 스타일 */
+        .logo-icon img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          border-radius: 8px;
         }
 
         .payment-text {
@@ -225,9 +244,12 @@
             <input type="hidden" name="paymentId" th:value="${paymentId}"/>
             <button type="submit" class="payment-button woori-pay-button">
                 <div class="button-content">
-                    <div class="logo-icon">우</div>
+                    <div class="logo-icon">
+                        <img src="IMG_6773.jpg" alt="우리은행 로고" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <span style="display:none;">우</span>
+                    </div>
                     <div class="payment-text">
-                        <span class="woori-logo-text">우리Pay로 결제하기</span>
+                        <span class="woori-logo-text">원큐PAY로 결제하기</span>
                         <span class="payment-desc">간편하고 빠른 우리페이 결제</span>
                     </div>
                 </div>
@@ -237,7 +259,10 @@
 
         <button class="payment-button woori-bank-button">
             <div class="button-content">
-                <div class="logo-icon">우</div>
+                <div class="logo-icon">
+                    <img src="wooribank_logo.jpeg" alt="우리은행 로고" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <span style="display:none;">우</span>
+                </div>
                 <div class="payment-text">
                     <span class="woori-logo-text">우리뱅크로 결제하기</span>
                     <span class="payment-desc">우리은행 계좌 이용 결제</span>
@@ -248,7 +273,10 @@
 
         <button class="payment-button woori-card-button">
             <div class="button-content">
-                <div class="logo-icon">우</div>
+                <div class="logo-icon">
+                    <img src="IMG_6772.jpg" alt="우리카드 로고" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <span style="display:none;">우</span>
+                </div>
                 <div class="payment-text">
                     <span class="woori-logo-text">우리카드로 결제하기</span>
                     <span class="payment-desc">우리카드 앱카드 간편결제</span>
@@ -281,7 +309,7 @@
         // 폼 상태 표시
         const submitButton = this.querySelector('button[type="submit"]');
         const originalContent = submitButton.innerHTML;
-        submitButton.innerHTML = '<div class="button-content"><div class="logo-icon">우</div><div class="payment-text"><span class="woori-logo-text">처리 중...</span></div></div>';
+        submitButton.innerHTML = '<div class="button-content"><div class="logo-icon"><img src="/images/wooribank_logo.jpeg" alt="우리은행 로고" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';"><span style="display:none;">우</span></div><div class="payment-text"><span class="woori-logo-text">처리 중...</span></div></div>';
 
         // 폼 제출 진행 확인을 위해 fetch API 사용
         event.preventDefault();
