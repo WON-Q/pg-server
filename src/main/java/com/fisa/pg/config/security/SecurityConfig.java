@@ -88,11 +88,12 @@ public class SecurityConfig {
                 .build();
     }
 
+
     @Bean
     @Order(6) // 기타 허용된 공개 엔드포인트
     public SecurityFilterChain miscPublicFilterChain(HttpSecurity http) throws Exception {
         return configureCommon(http)
-                .securityMatcher("/actuator/health", "/favicon.ico", "/public/**")
+                .securityMatcher("/actuator/health", "/favicon.ico", "/public/**", "/images/**", "/css/**", "/js/**")
                 .authorizeHttpRequests(request ->
                         request.anyRequest().permitAll()
                 )

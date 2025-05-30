@@ -5,16 +5,20 @@ import com.fisa.pg.dto.response.RefundResponseToOneQOrderDto;
 import com.fisa.pg.entity.payment.Payment;
 import com.fisa.pg.entity.payment.PaymentStatus;
 import com.fisa.pg.entity.transaction.Transaction;
+import com.fisa.pg.entity.transaction.TransactionLog;
 import com.fisa.pg.entity.transaction.TransactionStatus;
 import com.fisa.pg.feign.client.CardClient;
 import com.fisa.pg.feign.dto.card.request.RefundRequestToCardDto;
 import com.fisa.pg.feign.dto.card.response.RefundResponseFromCardDto;
 import com.fisa.pg.repository.PaymentRepository;
+import com.fisa.pg.repository.TransactionLogRepository;
 import com.fisa.pg.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 /**
  * 환불 요청을 처리하는 서비스 클래스입니다.
@@ -27,6 +31,7 @@ public class RefundService {
     private final PaymentRepository paymentRepository;
     private final TransactionRepository transactionRepository;
     private final CardClient cardClient;
+    private final TransactionLogRepository transactionLogRepository;
 
     /**
      * 원큐오더 서버로부터의 환불 요청을 처리하고 카드사에 환불 요청을 위임한 후,
@@ -67,8 +72,24 @@ public class RefundService {
 
             // 아래 코드가 범인이다.
             transaction.updateTransactionStatus(TransactionStatus.CANCELLED);
+
+            transactionLogRepository.save(TransactionLog.builder()
+                    .transaction(transaction)
+                    .message("결제 환불 성공")
+                    .status(TransactionStatus.CANCELLED)
+                    .merchant(payment.getMerchant())
+                    .createdAt(LocalDateTime.now())
+                    .build());
         } else {
             transaction.updateTransactionStatus(TransactionStatus.REFUND_FAILED);
+
+            transactionLogRepository.save(TransactionLog.builder()
+                    .transaction(transaction)
+                    .message("결제 환불 실패")
+                    .status(TransactionStatus.REFUND_FAILED)
+                    .merchant(payment.getMerchant())
+                    .createdAt(LocalDateTime.now())
+                    .build());
         }
 
         // 5. 최종 응답 생성

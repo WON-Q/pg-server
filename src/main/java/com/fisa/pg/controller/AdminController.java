@@ -2,7 +2,9 @@ package com.fisa.pg.controller;
 
 import com.fisa.pg.dto.response.ApiKeyResponseDto;
 import com.fisa.pg.dto.response.BaseResponse;
+import com.fisa.pg.dto.response.TransactionLogResponseDto;
 import com.fisa.pg.dto.response.WebhookResponseDto;
+import com.fisa.pg.service.AdminTransactionService;
 import com.fisa.pg.service.ApiKeyService;
 import com.fisa.pg.service.WebhookService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,8 @@ public class AdminController {
 
     private final WebhookService webhookService;
 
+    private final AdminTransactionService adminTransactionService;
+
     /**
      * 전체 API 키 목록 페이징 조회 API
      *
@@ -39,6 +43,18 @@ public class AdminController {
     public ResponseEntity<BaseResponse<Page<ApiKeyResponseDto>>> getApiKeyList(Pageable pageable) {
         Page<ApiKeyResponseDto> data = apiKeyService.getApiKeyList(pageable);
         return ResponseEntity.ok(BaseResponse.onSuccess("API 키 목록 조회 성공", data));
+    }
+
+    /**
+     * 전체 트랜잭션 로그 조회 API
+     *
+     * @param pageable 페이지 정보
+     * @return 트랜잭션 로그 응답 DTO 페이지
+     */
+    @GetMapping("/transactions")
+    public ResponseEntity<BaseResponse<Page<TransactionLogResponseDto>>> getAllTransactions(Pageable pageable) {
+        Page<TransactionLogResponseDto> result = adminTransactionService.getAllTransactionLogs(pageable);
+        return ResponseEntity.ok(BaseResponse.onSuccess("전체 트랜잭션 조회 성공", result));
     }
 
     /**
