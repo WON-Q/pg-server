@@ -46,31 +46,25 @@ public class MerchantController {
      * 만료일이 지정되지 않은 경우 기본값으로 1년 후로 설정됩니다.
      * </p>
      *
-     * @param requestDto API 키 생성 요청 정보 (이름, 만료일)
+     * @param dto API 키 생성 요청 정보 (이름, 만료일)
      * @param merchant   현재 인증된 가맹점 정보
      * @return 생성된 API 키 정보와 함께 201 Created 응답
      * @throws jakarta.validation.ConstraintViolationException 요청 데이터 유효성 검증 실패 시
      */
     @PostMapping("/api-keys")
-    public ResponseEntity<CreateApiKeyResponseDto> createApiKey(
-            @Valid @RequestBody CreateApiKeyRequestDto requestDto,
+    public ResponseEntity<BaseResponse<CreateApiKeyResponseDto>> createApiKey(
+            @Valid @RequestBody CreateApiKeyRequestDto dto,
             @AuthenticationPrincipal @NotNull Merchant merchant
     ) {
 
-        log.info("API 키 생성 요청: 가맹점 ID={}, 키 이름={}", merchant.getId(), requestDto.getName());
+        log.info("API 키 생성 요청: 가맹점 ID={}, 키 이름={}", merchant.getId(), dto.getName());
 
-        // 방어적 코딩: expiresAt이 null인 경우 기본값 설정 (필드에 @NotBlank 있지만 안전장치로 유지)
-        LocalDateTime expiresAt = requestDto.getExpiresAt() != null
-                ? requestDto.getExpiresAt()
-                : LocalDateTime.now().plusYears(1);
-
-        CreateApiKeyResponseDto responseDto = apiKeyService.issueApiKey(
-                requestDto.getName(),
-                merchant,
-                expiresAt);
+        CreateApiKeyResponseDto data = apiKeyService.issueApiKey(dto, merchant);
 
         log.info("API 키 생성 완료: 가맹점 ID={}", merchant.getId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+        return ResponseEntity.
+                status(HttpStatus.CREATED)
+                .body(BaseResponse.onCreate("가맹점 API 키 생성 성공", data));
     }
 
     /**
@@ -85,7 +79,7 @@ public class MerchantController {
      * @return 가맹점의 API 키 목록 페이지와 함께 200 OK 응답
      */
     @GetMapping("/api-keys")
-    public ResponseEntity<Page<ApiKeyResponseDto>> getApiKeys(
+    public ResponseEntity<BaseResponse<Page<ApiKeyResponseDto>>> getApiKeys(
             @AuthenticationPrincipal @NotNull Merchant merchant,
             Pageable pageable
     ) {
@@ -93,11 +87,11 @@ public class MerchantController {
         log.info("API 키 목록 조회 요청: 가맹점 ID={}, 페이지={}, 크기={}",
                 merchant.getId(), pageable.getPageNumber(), pageable.getPageSize());
 
-        Page<ApiKeyResponseDto> responsePage = apiKeyService.getMerchantApiKeys(merchant, pageable);
+        Page<ApiKeyResponseDto> data = apiKeyService.getMerchantApiKeys(merchant, pageable);
 
         log.info("API 키 목록 조회 완료: 가맹점 ID={}, 총 키 개수={}, 페이지 개수={}",
-                merchant.getId(), responsePage.getTotalElements(), responsePage.getTotalPages());
-        return ResponseEntity.ok(responsePage);
+                merchant.getId(), data.getTotalElements(), data.getTotalPages());
+        return ResponseEntity.ok(BaseResponse.onSuccess("가맹점 API 키 목록 조회 성공", data));
     }
 
     /**

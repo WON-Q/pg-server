@@ -1,5 +1,6 @@
 package com.fisa.pg.service;
 
+import com.fisa.pg.dto.request.CreateApiKeyRequestDto;
 import com.fisa.pg.dto.response.ApiKeyResponseDto;
 import com.fisa.pg.dto.response.CreateApiKeyResponseDto;
 import com.fisa.pg.entity.auth.ApiKey;
@@ -44,30 +45,27 @@ public class ApiKeyService {
     /**
      * API 키 발급 메서드 (가맹점용)
      *
-     * @param keyName   API 키 이름
+     * @param requestDto API 키 발급 요청 DTO
      * @param merchant  API 키를 발급받는 가맹점
-     * @param expiresAt 만료일 (지정하지 않으면 기본값으로 1년 후 설정)
      * @return 생성된 API 키 정보
      */
     @PostAuthorize("hasRole('MERCHANT')")
     @Transactional
-    public CreateApiKeyResponseDto issueApiKey(String keyName, Merchant merchant, LocalDateTime expiresAt) {
+    public CreateApiKeyResponseDto issueApiKey(CreateApiKeyRequestDto requestDto, Merchant merchant) {
         String accessKey = StringUtil.generateRandomString(20);
         String secretKey = StringUtil.generateRandomString(40);
 
         ApiKey apiKey = ApiKey.builder()
                 .merchant(merchant)
-                .name(merchant.getName())
+                .name(requestDto.getName())
                 .accessKey(accessKey)
                 .secretKey(secretKey)
                 .issuedAt(LocalDateTime.now())
-                .expiresAt(expiresAt)
+                .expiresAt(requestDto.getExpiresAt())
                 .isActive(true)
                 .build();
 
         apiKeyRepository.save(apiKey);
-
-        log.info("API 키 발급 완료: 가맹점={}, 키이름={}", merchant.getName(), keyName);
 
         return CreateApiKeyResponseDto.from(apiKey);
     }
