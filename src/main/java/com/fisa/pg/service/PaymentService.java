@@ -12,6 +12,7 @@ import com.fisa.pg.entity.payment.Payment;
 import com.fisa.pg.entity.payment.PaymentMethod;
 import com.fisa.pg.entity.payment.PaymentStatus;
 import com.fisa.pg.entity.transaction.Transaction;
+import com.fisa.pg.entity.transaction.TransactionLog;
 import com.fisa.pg.entity.transaction.TransactionStatus;
 import com.fisa.pg.entity.user.Merchant;
 import com.fisa.pg.exception.AppCardAuthenticationFailedException;
@@ -24,10 +25,7 @@ import com.fisa.pg.feign.dto.appcard.response.AppCardAuthResponseDto;
 import com.fisa.pg.feign.dto.card.request.CardPaymentApprovalRequestDto;
 import com.fisa.pg.feign.dto.card.response.BaseResponse;
 import com.fisa.pg.feign.dto.card.response.CardPaymentApprovalResponseDto;
-import com.fisa.pg.repository.BinInfoRepository;
-import com.fisa.pg.repository.PaymentRepository;
-import com.fisa.pg.repository.TransactionRepository;
-import com.fisa.pg.repository.UserCardRepository;
+import com.fisa.pg.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -52,6 +50,8 @@ public class PaymentService {
     private final TransactionRepository transactionRepository;
 
     private final UserCardRepository userCardRepository;
+
+    private final TransactionLogRepository transactionLogRepository;
 
     private static final SecureRandom random = new SecureRandom();
 
@@ -102,7 +102,17 @@ public class PaymentService {
 
         transactionRepository.save(transaction);
 
-        // 4. 응답 반환
+        // 4. 트랜잭션 로그 생성
+        TransactionLog logEntry = TransactionLog.builder()
+                .transaction(transaction)
+                .message("결제 생성 완료")
+                .status(transaction.getTransactionStatus())
+                .merchant(merchant)
+                .createdAt(LocalDateTime.now())
+                .build();
+        transactionLogRepository.save(logEntry);
+
+        // 5. 응답 반환
         return PaymentCreateResponseDto.from(payment, merchant);
     }
 
@@ -140,6 +150,15 @@ public class PaymentService {
         transaction.updatePaymentMethod(method);
 
         log.info("결제 수단 {}로 업데이트 완료: paymentId={}, txnId={}", method, payment.getId(), transaction.getTransactionId());
+
+        TransactionLog logEntry = TransactionLog.builder()
+                .transaction(transaction)
+                .message("결제 수단 업데이트: " + method)
+                .status(transaction.getTransactionStatus())
+                .merchant(payment.getMerchant())
+                .createdAt(LocalDateTime.now())
+                .build();
+        transactionLogRepository.save(logEntry);
 
         // 결제 UI URL 생성 (11단계)
         String redirectUrl = generatePaymentRedirectUrl(payment, method);
@@ -227,6 +246,14 @@ public class PaymentService {
             transaction.updateTransactionStatus(TransactionStatus.AUTH_FAILED);
             transactionRepository.save(transaction);
 
+            transactionLogRepository.save(TransactionLog.builder()
+                    .transaction(transaction)
+                    .message("앱카드 인증 실패")
+                    .status(transaction.getTransactionStatus())
+                    .merchant(payment.getMerchant())
+                    .createdAt(LocalDateTime.now())
+                    .build());
+
             // 인증 실패 예외 던짐
             throw new AppCardAuthenticationFailedException(transactionId);
         }
@@ -247,6 +274,14 @@ public class PaymentService {
 
             transaction.updateTransactionStatus(TransactionStatus.FAILED);
             transactionRepository.save(transaction);
+
+            transactionLogRepository.save(TransactionLog.builder()
+                    .transaction(transaction)
+                    .message("지원하지 않는 카드사")
+                    .status(transaction.getTransactionStatus())
+                    .merchant(payment.getMerchant())
+                    .createdAt(LocalDateTime.now())
+                    .build());
 
             // 카드사 미지원 예외 던짐
             throw new UnsupportedIssuerException(transactionId, cardNumber);
@@ -286,8 +321,16 @@ public class PaymentService {
         );
         transactionRepository.save(transaction);
 
+        transactionLogRepository.save(TransactionLog.builder()
+                .transaction(transaction)
+                .message("카드사 승인 완료")
+                .status(transaction.getTransactionStatus())
+                .merchant(payment.getMerchant())
+                .createdAt(LocalDateTime.now())
+                .build());
+
         log.info("앱카드 서버에 결제 결과 전송 완료: txnId={}, status={}",
-            transactionId, payment.getPaymentStatus());
+                transactionId, payment.getPaymentStatus());
 
         return approvalResponse;
     }
