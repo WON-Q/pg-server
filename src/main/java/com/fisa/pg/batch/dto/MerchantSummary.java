@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
  * 가맹점별 일일 정산 요약 정보를 담는 불변 객체
  */
 public record MerchantSummary(
-        String merchantId,
+        Long merchantId,
         String merchantName,
         BigDecimal creditAmount,
         BigDecimal debitAmount,

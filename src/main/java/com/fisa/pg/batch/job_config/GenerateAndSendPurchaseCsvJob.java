@@ -105,7 +105,7 @@ public class GenerateAndSendPurchaseCsvJob {
                                                 BigDecimal totalSum = creditSum.add(debitSum);
 
                                                 return new MerchantSummary(
-                                                        m.getBusinessNumber(),
+                                                        m.getId(),
                                                         m.getName(),
                                                         creditSum,
                                                         debitSum,
