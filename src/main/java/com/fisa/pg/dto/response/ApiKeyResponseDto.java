@@ -59,6 +59,7 @@ public class ApiKeyResponseDto {
      */
     private LocalDateTime lastUsed;
 
+
     public static ApiKeyResponseDto from(ApiKey apiKey) {
         return ApiKeyResponseDto.builder()
                 .id(apiKey.getId())
@@ -69,6 +70,7 @@ public class ApiKeyResponseDto {
                 .isActive(apiKey.isActive())
                 .issuedAt(apiKey.getIssuedAt())
                 .expiresAt(apiKey.getExpiresAt())
+                .lastUsed(apiKey.getLastUsed())
                 .build();
     }
 

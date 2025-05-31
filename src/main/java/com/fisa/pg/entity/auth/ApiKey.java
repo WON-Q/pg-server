@@ -72,11 +72,23 @@ public class ApiKey {
     private boolean isActive;
 
     /**
+     * 마지막 사용 시각
+     */
+    @Column(name = "last_used", nullable = true)
+    private LocalDateTime lastUsed;
+
+    /**
      * API 키 비활성화 메서드
      */
+
     public void deactivate() {
         this.isActive = false;
     }
 
-
+    /**
+     * API 키 사용 시각 업데이트 메서드
+     */
+    public void updateLastUsed() {
+        this.lastUsed = LocalDateTime.now();
+    }
 }
