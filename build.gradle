@@ -49,6 +49,15 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
+    // Spring Batch
+    implementation 'org.apache.poi:poi-ooxml:5.3.0'
+    implementation 'org.springframework.boot:spring-boot-starter-batch'
+    implementation 'com.hierynomus:sshj:0.37.0'     // SFTP 프로토콜 지원
+    implementation 'org.springframework.retry:spring-retry'
+
+    // Spring Quartz
+    implementation 'org.springframework.boot:spring-boot-starter-quartz'
+
     // JWT
     implementation 'io.jsonwebtoken:jjwt:0.12.6'
 

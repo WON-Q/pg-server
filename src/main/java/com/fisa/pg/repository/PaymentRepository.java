@@ -1,9 +1,12 @@
 package com.fisa.pg.repository;
 
 import com.fisa.pg.entity.payment.Payment;
+import com.fisa.pg.entity.payment.PaymentStatus;
 import com.fisa.pg.entity.user.Merchant;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
@@ -16,4 +19,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      * @return 결제 정보
      */
     Optional<Payment> findByOrderIdAndMerchant(String orderId, Merchant merchant);
+
+    List<Payment> findByMerchantAndPaymentStatusAndApprovedAtBetween(
+            Merchant merchant,
+            PaymentStatus paymentStatus,
+            LocalDateTime start,
+            LocalDateTime end
+    );
 }
